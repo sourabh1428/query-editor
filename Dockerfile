@@ -62,8 +62,8 @@ FROM node:18-alpine AS runner
 
 WORKDIR /app
 
-# Install Redis
-RUN apk add --no-cache redis
+# Install Redis and other dependencies
+RUN apk add --no-cache redis python3 py3-pip
 
 # Copy package files
 COPY package*.json ./
@@ -91,24 +91,23 @@ ENV FLASK_ENV=production
 ENV REDIS_HOST=localhost
 ENV REDIS_PORT=6379
 
-# Install Python and backend dependencies in production
-RUN apk add --no-cache python3 py3-pip && \
-    cd backend && \
+# Install Python dependencies in production
+RUN cd backend && \
     python3 -m venv /opt/venv && \
     . /opt/venv/bin/activate && \
     pip3 install --no-cache-dir -r requirements.txt
+
+# Create startup script
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'redis-server --daemonize yes' >> /app/start.sh && \
+    echo 'cd /app/backend && . /opt/venv/bin/activate && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app &' >> /app/start.sh && \
+    echo 'cd /app && npm run start' >> /app/start.sh && \
+    chmod +x /app/start.sh
 
 # Expose ports
 EXPOSE 3000
 EXPOSE 5000
 EXPOSE 6379
 
-# Create a startup script
-RUN echo '#!/bin/sh\n\
-redis-server --daemonize yes\n\
-cd backend && . /opt/venv/bin/activate && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app & \
-cd /app && npm run start' > /app/start.sh && \
-chmod +x /app/start.sh
-
-# Start both frontend and backend
-CMD ["/app/start.sh"]
+# Start the application
+CMD ["/bin/sh", "/app/start.sh"]
