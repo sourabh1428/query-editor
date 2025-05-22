@@ -89,6 +89,8 @@ ENV FLASK_ENV=production
 # Install Python and backend dependencies in production
 RUN apk add --no-cache python3 py3-pip && \
     cd backend && \
+    python3 -m venv /opt/venv && \
+    . /opt/venv/bin/activate && \
     pip3 install --no-cache-dir -r requirements.txt
 
 # Expose ports
@@ -96,4 +98,4 @@ EXPOSE 3000
 EXPOSE 5000
 
 # Start both frontend and backend
-CMD sh -c "cd backend && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app & cd .. && npm run start"
+CMD sh -c "cd backend && . /opt/venv/bin/activate && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app & cd .. && npm run start"
