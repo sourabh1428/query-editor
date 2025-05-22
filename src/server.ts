@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 
@@ -15,7 +15,7 @@ const pool = new Pool({
 });
 
 // Health check endpoint
-app.get('/api/health', async (req, res) => {
+app.get('/api/health', async (req: Request, res: Response) => {
   try {
     // Check database connection
     await pool.query('SELECT 1');
@@ -24,11 +24,11 @@ app.get('/api/health', async (req, res) => {
       database: 'connected',
       timestamp: new Date().toISOString()
     });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({
       status: 'unhealthy',
       database: 'disconnected',
-      error: error.message,
+      error: error?.message || 'Unknown error',
       timestamp: new Date().toISOString()
     });
   }

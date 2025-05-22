@@ -3,6 +3,8 @@ services:
     name: sql-analytics-platform
     env: docker
     dockerfilePath: ./Dockerfile
+    region: oregon
+    plan: free
     envVars:
       - key: VITE_API_URL
         value: https://sql-analytics-platform.onrender.com
@@ -16,7 +18,27 @@ services:
         value: 3000
     healthCheckPath: /api/health
     autoDeploy: true
-    plan: free
+    branch: main
+    buildFilter:
+      paths:
+        - src/**
+        - public/**
+        - package.json
+        - package-lock.json
+        - tsconfig.json
+        - vite.config.ts
+        - Dockerfile
+        - render.yaml
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-XSS-Protection
+        value: 1; mode=block
 
   - type: postgresql
     name: sql-analytics-db
