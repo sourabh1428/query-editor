@@ -13,4 +13,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    sourcemap: true,
+    commonjsOptions: {
+      include: [/node_modules/],
+    },
+  },
 });

@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine as build
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
@@ -16,33 +16,26 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine
+FROM node:18-alpine AS runner
 
 WORKDIR /app
 
-# Copy built assets from build stage
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/package*.json ./
+# Copy package files
+COPY package*.json ./
 
 # Install production dependencies only
 RUN npm ci --only=production
 
-# Add non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-
-# Set proper permissions
-RUN chown -R nextjs:nodejs /app
-
-# Switch to non-root user
-USER nextjs
-
-# Expose port
-EXPOSE 3000
+# Copy built assets from builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
 
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
+
+# Expose port
+EXPOSE 3000
 
 # Start the application
 CMD ["npm", "start"]
