@@ -10,11 +10,11 @@ import PrivateRoute from './components/PrivateRoute';
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
             <Route
               path="/dashboard"
               element={
@@ -24,10 +24,10 @@ function App() {
               }
             />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Router>
+        </Routes>
+      </Router>
         <Toaster />
-      </AuthProvider>
+    </AuthProvider>
     </ThemeProvider>
   );
 }

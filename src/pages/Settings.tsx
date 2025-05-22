@@ -7,9 +7,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Moon, Sun, User, Lock, Mail } from 'lucide-react';
 import { useTheme } from '../components/theme-provider';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { API_URL } from '../config';
 
 const Settings: React.FC = () => {
   const { user } = useAuth();
@@ -22,37 +20,33 @@ const Settings: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const updateProfile = async (data: { username?: string; email?: string; currentPassword?: string; newPassword?: string }) => {
-    try {
-      await axios.put(`${API_URL}/api/users/profile`, data, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || 'Failed to update profile',
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUpdating(true);
     try {
-      await updateProfile({ username, email });
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      const response = await fetch(`${API_URL}/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ username, email }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Profile updated successfully',
+      });
     } catch (error) {
-      // Error is already handled in updateProfile
+      toast({
+        title: 'Error',
+        description: 'Failed to update profile',
+        variant: 'destructive',
+      });
     } finally {
       setIsUpdating(false);
     }
@@ -62,20 +56,44 @@ const Settings: React.FC = () => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Error",
-        description: "New passwords do not match",
-        variant: "destructive",
+        title: 'Error',
+        description: 'New passwords do not match',
+        variant: 'destructive',
       });
       return;
     }
     setIsUpdating(true);
     try {
-      await updateProfile({ currentPassword, newPassword });
+      const response = await fetch(`${API_URL}/users/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update password');
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Password updated successfully',
+      });
+
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
-      // Error is already handled in updateProfile
+      toast({
+        title: 'Error',
+        description: 'Failed to update password',
+        variant: 'destructive',
+      });
     } finally {
       setIsUpdating(false);
     }

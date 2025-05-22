@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def register_user():
-    url = "http://localhost:5000/api/auth/register"
+    url = "https://sql-analytics-platform.onrender.com/api/auth/register"
     data = {
         "username": "sppathak",
         "email": "sppathak1428@gmail.com",

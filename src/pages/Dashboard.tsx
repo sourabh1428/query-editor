@@ -10,6 +10,10 @@ import { useToast } from '../components/ui/use-toast';
 import QueryResults from '../components/QueryResults';
 import SchemaExplorer from '../components/SchemaExplorer';
 import axios from 'axios';
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { CardHeader, CardTitle, CardDescription, CardFooter } from "../components/ui/card";
+import { API_URL } from "../config";
 
 interface QueryResult {
   [key: string]: any;
@@ -48,9 +52,6 @@ const Dashboard: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
 
-  // API base URL from environment
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
   useEffect(() => {
     fetchHistory();
     fetchTables();
@@ -67,8 +68,12 @@ const Dashboard: React.FC = () => {
     }
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/api/queries/execute`, {
+      const response = await axios.post(`${API_URL}/queries/execute`, {
         query
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
       });
       setResults(response.data.result);
       setActiveEditorTab('results');
@@ -91,7 +96,7 @@ const Dashboard: React.FC = () => {
   const fetchHistory = async () => {
     setHistoryLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/queries/history`, {
+      const response = await axios.get(`${API_URL}/queries/history`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -111,7 +116,7 @@ const Dashboard: React.FC = () => {
 
   const fetchTables = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/schema/tables`, {
+      const response = await axios.get(`${API_URL}/schema/tables`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -131,7 +136,7 @@ const Dashboard: React.FC = () => {
     setSchemaLoading(true);
     setSelectedTable(tableName);
     try {
-      const response = await axios.get(`${API_URL}/api/schema/tables/${tableName}`);
+      const response = await axios.get(`${API_URL}/schema/tables/${tableName}`);
       setTableSchema(response.data);
     } catch (error) {
       console.error('Error fetching table schema:', error);
@@ -142,7 +147,7 @@ const Dashboard: React.FC = () => {
 
   const deleteQuery = async (queryId: number) => {
     try {
-      await axios.delete(`${API_URL}/api/queries/${queryId}`, {
+      await axios.delete(`${API_URL}/queries/${queryId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -164,7 +169,7 @@ const Dashboard: React.FC = () => {
 
   const downloadResults = async (queryId: number) => {
     try {
-      const response = await axios.get(`${API_URL}/api/queries/${queryId}/download`, {
+      const response = await axios.get(`${API_URL}/queries/${queryId}/download`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
@@ -222,6 +227,40 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/queries/execute`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to execute query");
+      }
+
+      const data = await response.json();
+      setResults(data.results);
+      toast({
+        title: "Success",
+        description: "Query executed successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to execute query",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Sidebar */}
@@ -235,7 +274,7 @@ const Dashboard: React.FC = () => {
           {navLinks.map((link) => {
             const Icon = link.icon;
             return (
-              <button
+            <button
                 key={link.label}
                 onClick={() => handleTabClick(link.tab)}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors w-full ${
@@ -244,7 +283,7 @@ const Dashboard: React.FC = () => {
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
                 <span className="truncate">{link.label}</span>
-              </button>
+            </button>
             );
           })}
         </nav>
@@ -261,7 +300,7 @@ const Dashboard: React.FC = () => {
             variant="ghost"
             className="w-full flex items-center gap-2 justify-start text-destructive hover:text-destructive/90 hover:bg-destructive/10"
             onClick={logout}
-          >
+            >
             <LogOut className="w-5 h-5 flex-shrink-0" />
             <span className="truncate">Sign Out</span>
           </Button>

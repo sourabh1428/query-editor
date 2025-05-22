@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { useToast } from '../components/ui/use-toast';
+import { API_URL } from '../config';
 
 interface Query {
   id: number;
@@ -16,7 +17,7 @@ const QueryHistory = () => {
   useEffect(() => {
     const fetchQueries = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/queries/history', {
+        const response = await fetch(`${API_URL}/queries/history`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },

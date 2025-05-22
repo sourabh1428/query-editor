@@ -59,6 +59,7 @@ RUN mkdir -p public
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOST=0.0.0.0
+ENV VITE_API_URL=https://sql-analytics-platform.onrender.com/api
 
 # Expose port
 EXPOSE 3000
