@@ -20,7 +20,10 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - app-network
+      app-network:
+        aliases:
+          - backend
+    restart: unless-stopped
 
   frontend:
     build:
@@ -31,7 +34,10 @@ services:
     environment:
       - VITE_API_URL=http://localhost:5000/api
     networks:
-      - app-network
+      app-network:
+        aliases:
+          - frontend
+    restart: unless-stopped
 
   postgres:
     image: postgres:16
@@ -49,11 +55,15 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - app-network
+      app-network:
+        aliases:
+          - postgres
+    restart: unless-stopped
 
 networks:
   app-network:
     driver: bridge
+    name: app-network
 
 volumes:
   postgres_data:
