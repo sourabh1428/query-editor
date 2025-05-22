@@ -29,6 +29,7 @@ RUN npm ci --only=production
 # Copy built assets from builder stage
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/src/lib ./src/lib
 
 # Set environment variables
 ENV NODE_ENV=production
