@@ -13,12 +13,19 @@ RUN npm ci
 COPY tsconfig.json .
 COPY vite.config.ts .
 
-# Create lib directory and copy utils file
-RUN mkdir -p src/lib
-COPY src/lib/utils.ts src/lib/
-
-# Copy rest of the source code
+# Copy source code
 COPY src/ src/
+
+# Verify the utils file exists and create it if it doesn't
+RUN if [ ! -f src/lib/utils.ts ]; then \
+    mkdir -p src/lib && \
+    echo 'import { type ClassValue, clsx } from "clsx"; \
+import { twMerge } from "tailwind-merge"; \
+\
+export function cn(...inputs: ClassValue[]) { \
+  return twMerge(clsx(inputs)); \
+}' > src/lib/utils.ts; \
+fi
 
 # Build the application
 RUN npm run build
