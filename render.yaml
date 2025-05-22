@@ -1,22 +1,18 @@
 services:
   - type: web
-    name: sql-analytics-platform
+    name: sql-analytics-platform-frontend
     env: docker
     dockerfilePath: ./Dockerfile
     region: oregon
     plan: free
     envVars:
       - key: VITE_API_URL
-        value: http://localhost:5000/api
-      - key: JWT_SECRET
-        generateValue: true
-      - key: DATABASE_URL
-        value: postgresql://ijp_user:JbufturibQwmucF0vl62pbzkBW6l1a9f@dpg-d0nimqmuk2gs73c1c6rg-a/ijp
+        value: https://sql-analytics-platform-backend.onrender.com/api
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 3000
-    healthCheckPath: /api/health
+    healthCheckPath: /
     autoDeploy: true
     branch: main
     buildFilter:
@@ -39,6 +35,31 @@ services:
       - path: /*
         name: X-XSS-Protection
         value: 1; mode=block
+
+  - type: web
+    name: sql-analytics-platform-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    region: oregon
+    plan: free
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        value: postgresql://ijp_user:JbufturibQwmucF0vl62pbzkBW6l1a9f@dpg-d0nimqmuk2gs73c1c6rg-a/ijp
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+    healthCheckPath: /api/health
+    autoDeploy: true
+    branch: main
+    buildFilter:
+      paths:
+        - backend/**
+        - requirements.txt
+        - render.yaml
 
   - type: postgresql
     name: sql-analytics-db
