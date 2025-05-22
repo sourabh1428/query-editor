@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Moon, Sun, LayoutDashboard, History, Database, Settings, LogOut, Download, Trash2, Clock, Play, Copy, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Card, CardContent } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import QueryEditor from '../components/QueryEditor';
 import { useTheme } from '../components/theme-provider';
@@ -12,7 +12,6 @@ import SchemaExplorer from '../components/SchemaExplorer';
 import axios from 'axios';
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { CardHeader, CardTitle, CardDescription, CardFooter } from "../components/ui/card";
 import { API_URL } from "../config";
 
 interface QueryResult {
@@ -224,40 +223,6 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Error formatting date:', error);
       return 'Invalid Date';
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/queries/execute`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ query }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to execute query");
-      }
-
-      const data = await response.json();
-      setResults(data.results);
-      toast({
-        title: "Success",
-        description: "Query executed successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to execute query",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
