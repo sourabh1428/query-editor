@@ -13,11 +13,12 @@ RUN npm ci
 COPY tsconfig.json .
 COPY vite.config.ts .
 
-# Copy source code
-COPY src/ src/
+# Create lib directory and copy utils file
+RUN mkdir -p src/lib
+COPY src/lib/utils.ts src/lib/
 
-# Verify the utils file exists
-RUN ls -la src/lib/utils.ts
+# Copy rest of the source code
+COPY src/ src/
 
 # Build the application
 RUN npm run build
