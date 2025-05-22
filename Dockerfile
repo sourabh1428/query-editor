@@ -9,8 +9,15 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
+# Copy configuration files
+COPY tsconfig.json .
+COPY vite.config.ts .
+
 # Copy source code
-COPY . .
+COPY src/ src/
+
+# Verify the utils file exists
+RUN ls -la src/lib/utils.ts
 
 # Build the application
 RUN npm run build
@@ -29,7 +36,6 @@ RUN npm ci --only=production
 # Copy built assets from builder stage
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/src/lib ./src/lib
 
 # Set environment variables
 ENV NODE_ENV=production
