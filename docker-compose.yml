@@ -1,49 +1,48 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "3000:3000"
       - "5000:5000"
-      - "6379:6379"
-    volumes:
-      - .:/app
-      - /app/node_modules
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
-      - VITE_API_URL=https://sql-analytics-platform.onrender.com/api
+      - DB_NAME=sqlanalytics
+      - JWT_SECRET=your-secret-key
       - REDIS_HOST=localhost
       - REDIS_PORT=6379
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - DB_NAME=sqlanalytics
-      - JWT_SECRET=your-secret-key
-      - PYTHONUNBUFFERED=1
-      - FLASK_APP=app.py
-      - FLASK_ENV=production
-      - NODE_ENV=production
-      - PORT=3000
-      - HOST=0.0.0.0
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - app-network
-    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+    networks:
+      - app-network
 
   postgres:
-    image: postgres:16
-    ports:
-      - "5432:5432"
+    image: postgres:13
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=sqlanalytics
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -51,12 +50,10 @@ services:
       retries: 5
     networks:
       - app-network
-    restart: unless-stopped
 
 networks:
   app-network:
     driver: bridge
-    name: app-network
 
 volumes:
   postgres_data:

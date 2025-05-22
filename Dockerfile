@@ -42,7 +42,7 @@ ENV VITE_API_URL=https://sql-analytics-platform.onrender.com/api
 RUN npm run build
 
 # Backend build stage
-FROM python:3.9-slim AS backend-builder
+FROM python:3.9-slim
 
 WORKDIR /app/backend
 
@@ -60,34 +60,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend code
 COPY backend/ .
 
-# Production stage
-FROM node:18-alpine AS runner
-
-WORKDIR /app
-
-# Install Redis and other dependencies
-RUN apk add --no-cache redis python3 py3-pip
-
-# Copy package files
-COPY package*.json ./
-
-# Install all dependencies (including vite)
-RUN npm ci
-
-# Copy built assets from frontend builder stage
-COPY --from=frontend-builder /app/dist ./dist
-
-# Create public directory in runner stage
-RUN mkdir -p public
-
-# Copy backend from backend builder stage
-COPY --from=backend-builder /app/backend ./backend
-
 # Set environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOST=0.0.0.0
-ENV VITE_API_URL=https://sql-analytics-platform.onrender.com/api
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
@@ -99,25 +72,23 @@ ENV DB_USER=postgres
 ENV DB_PASSWORD=postgres
 ENV DB_NAME=sqlanalytics
 
-# Install Python dependencies in production
-RUN cd backend && \
-    python3 -m venv /opt/venv && \
-    . /opt/venv/bin/activate && \
-    pip3 install --no-cache-dir -r requirements.txt
-
 # Create Redis configuration
 RUN echo "bind 0.0.0.0" > /etc/redis.conf && \
     echo "protected-mode no" >> /etc/redis.conf && \
     echo "port 6379" >> /etc/redis.conf
 
-# Copy and set up startup script
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+# Create startup script
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'echo "Starting Redis..."' >> /app/start.sh && \
+    echo 'redis-server /etc/redis.conf --daemonize yes' >> /app/start.sh && \
+    echo 'sleep 2' >> /app/start.sh && \
+    echo 'redis-cli ping || echo "Redis failed to start"' >> /app/start.sh && \
+    echo 'echo "Starting backend..."' >> /app/start.sh && \
+    echo 'gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app' >> /app/start.sh && \
+    chmod +x /app/start.sh
 
-# Expose ports
-EXPOSE 3000
+# Expose port
 EXPOSE 5000
-EXPOSE 6379
 
 # Start the application
 CMD ["/bin/sh", "/app/start.sh"]
