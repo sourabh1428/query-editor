@@ -1,7 +1,7 @@
 # Build stage
 FROM node:18-alpine AS builder
 
-WORKDIR /app
+WORKDIR /
 
 # Copy package files
 COPY package*.json ./
