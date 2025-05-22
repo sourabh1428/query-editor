@@ -35,7 +35,7 @@ class RedisClient:
                 self.client = redis.Redis(
                     host=REDIS_HOST,
                     port=REDIS_PORT,
-                    decode_responses=False,
+                    decode_responses=True,  # Changed to True for better string handling
                     socket_timeout=5,
                     socket_connect_timeout=5,
                     retry_on_timeout=True,
