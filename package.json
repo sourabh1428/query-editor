@@ -32,7 +32,8 @@
     "react-router-dom": "^6.22.0",
     "sql-analytics-platform": "file:",
     "tailwind-merge": "^3.3.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "vite": "^5.1.3"
   },
   "devDependencies": {
     "@eslint/js": "^8.56.0",
@@ -53,7 +54,6 @@
     "globals": "^13.24.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.3.3",
-    "vite": "^5.1.3"
+    "typescript": "^5.3.3"
   }
 }
