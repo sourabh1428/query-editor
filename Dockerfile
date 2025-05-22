@@ -90,6 +90,11 @@ ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 ENV REDIS_HOST=localhost
 ENV REDIS_PORT=6379
+ENV DB_HOST=postgres
+ENV DB_PORT=5432
+ENV DB_USER=postgres
+ENV DB_PASSWORD=postgres
+ENV DB_NAME=sqlanalytics
 
 # Install Python dependencies in production
 RUN cd backend && \
@@ -97,17 +102,14 @@ RUN cd backend && \
     . /opt/venv/bin/activate && \
     pip3 install --no-cache-dir -r requirements.txt
 
-# Create startup script with Redis debugging
-RUN echo '#!/bin/sh' > /app/start.sh && \
-    echo 'echo "Starting Redis..."' >> /app/start.sh && \
-    echo 'redis-server --daemonize yes' >> /app/start.sh && \
-    echo 'sleep 2' >> /app/start.sh && \
-    echo 'redis-cli ping || echo "Redis failed to start"' >> /app/start.sh && \
-    echo 'echo "Starting backend..."' >> /app/start.sh && \
-    echo 'cd /app/backend && . /opt/venv/bin/activate && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app &' >> /app/start.sh && \
-    echo 'echo "Starting frontend..."' >> /app/start.sh && \
-    echo 'cd /app && npm run start' >> /app/start.sh && \
-    chmod +x /app/start.sh
+# Create Redis configuration
+RUN echo "bind 0.0.0.0" > /etc/redis.conf && \
+    echo "protected-mode no" >> /etc/redis.conf && \
+    echo "port 6379" >> /etc/redis.conf
+
+# Copy and set up startup script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Expose ports
 EXPOSE 3000

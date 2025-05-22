@@ -23,6 +23,12 @@ services:
       - DB_PASSWORD=postgres
       - DB_NAME=sqlanalytics
       - JWT_SECRET=your-secret-key
+      - PYTHONUNBUFFERED=1
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+    networks:
+      - app-network
+    restart: unless-stopped
 
   postgres:
     image: postgres:16
@@ -40,6 +46,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+    name: app-network
 
 volumes:
   postgres_data:
