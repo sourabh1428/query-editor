@@ -7,7 +7,7 @@ services:
     plan: free
     envVars:
       - key: VITE_API_URL
-        value: https://sql-analytics-platform.onrender.com/api
+        value: https://sql-analytics-platform-api.onrender.com/api
       - key: NODE_ENV
         value: production
       - key: PORT
@@ -51,6 +51,10 @@ services:
         value: production
       - key: PORT
         value: 5000
+      - key: FLASK_APP
+        value: app.py
+      - key: FLASK_ENV
+        value: production
     healthCheckPath: /api/health
     autoDeploy: true
     branch: main
@@ -59,6 +63,16 @@ services:
         - backend/**
         - requirements.txt
         - render.yaml
+    headers:
+      - path: /*
+        name: Access-Control-Allow-Origin
+        value: "*"
+      - path: /*
+        name: Access-Control-Allow-Methods
+        value: "GET, POST, PUT, DELETE, OPTIONS"
+      - path: /*
+        name: Access-Control-Allow-Headers
+        value: "Content-Type, Authorization"
 
   - type: postgresql
     name: sql-analytics-db
