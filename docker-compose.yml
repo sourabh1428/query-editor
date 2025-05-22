@@ -17,6 +17,12 @@ services:
       - VITE_API_URL=http://localhost:5000/api
       - REDIS_HOST=localhost
       - REDIS_PORT=6379
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=sqlanalytics
+      - JWT_SECRET=your-secret-key
 
   postgres:
     image: postgres:16

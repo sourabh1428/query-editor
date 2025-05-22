@@ -15,11 +15,19 @@ auth_bp = Blueprint('auth', __name__)
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key")
 
 def add_cors_headers(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
+    if isinstance(response, tuple):
+        response_obj, status_code = response
+        response_obj.headers.add('Access-Control-Allow-Origin', '*')
+        response_obj.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response_obj.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        response_obj.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response_obj, status_code
+    else:
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
 
 @auth_bp.route('/register', methods=['POST', 'OPTIONS'])
 def register():
