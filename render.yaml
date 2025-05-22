@@ -1,13 +1,13 @@
 services:
   - type: web
-    name: sql-analytics-platform-frontend
+    name: sql-analytics-platform
     env: docker
     dockerfilePath: ./Dockerfile
     region: oregon
     plan: free
     envVars:
       - key: VITE_API_URL
-        value: https://sql-analytics-platform-backend.onrender.com/api
+        value: https://sql-analytics-platform.onrender.com/api
       - key: NODE_ENV
         value: production
       - key: PORT
@@ -37,7 +37,7 @@ services:
         value: 1; mode=block
 
   - type: web
-    name: sql-analytics-platform-backend
+    name: sql-analytics-platform-api
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
