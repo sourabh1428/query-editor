@@ -1,5 +1,5 @@
-# Build stage
-FROM node:18-alpine AS builder
+# Frontend build stage
+FROM node:18-alpine AS frontend-builder
 
 WORKDIR /app
 
@@ -38,6 +38,25 @@ fi
 # Build the application
 RUN npm run build
 
+# Backend build stage
+FROM python:3.9-slim AS backend-builder
+
+WORKDIR /app/backend
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements file
+COPY backend/requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy backend code
+COPY backend/ .
+
 # Production stage
 FROM node:18-alpine AS runner
 
@@ -49,20 +68,32 @@ COPY package*.json ./
 # Install all dependencies (including vite)
 RUN npm ci
 
-# Copy built assets from builder stage
-COPY --from=builder /app/dist ./dist
+# Copy built assets from frontend builder stage
+COPY --from=frontend-builder /app/dist ./dist
 
 # Create public directory in runner stage
 RUN mkdir -p public
+
+# Copy backend from backend builder stage
+COPY --from=backend-builder /app/backend ./backend
 
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOST=0.0.0.0
 ENV VITE_API_URL=https://sql-analytics-platform.onrender.com/api
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=production
 
-# Expose port
+# Install Python and backend dependencies in production
+RUN apk add --no-cache python3 py3-pip && \
+    cd backend && \
+    pip3 install --no-cache-dir -r requirements.txt
+
+# Expose ports
 EXPOSE 3000
+EXPOSE 5000
 
-# Start the application
-CMD ["npm", "run", "start"]
+# Start both frontend and backend
+CMD sh -c "cd backend && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app & cd .. && npm run start"
