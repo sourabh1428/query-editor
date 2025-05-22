@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import axios from 'axios';
+import { useToast } from '../components/ui/use-toast';
 
 interface User {
   id: number;
@@ -35,6 +36,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   // API base URL from environment
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -80,8 +82,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setToken(token);
       setUser(user);
-    } catch (error) {
+
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+        variant: "default",
+      });
+    } catch (error: any) {
       console.error('Login error:', error);
+      toast({
+        title: "Login Failed",
+        description: error.response?.data?.message || "Invalid credentials",
+        variant: "destructive",
+      });
       throw error;
     }
   };
@@ -96,8 +109,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Auto login after registration
       await login(email, password);
-    } catch (error) {
+
+      toast({
+        title: "Registration Successful!",
+        description: "You can now log in to your account.",
+        variant: "default",
+      });
+    } catch (error: any) {
       console.error('Registration error:', error);
+      toast({
+        title: "Registration Failed",
+        description: error.response?.data?.message || "Failed to create account",
+        variant: "destructive",
+      });
       throw error;
     }
   };
@@ -108,6 +132,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     delete axios.defaults.headers.common['Authorization'];
     setToken(null);
     setUser(null);
+
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+      variant: "default",
+    });
   };
 
   const value = {

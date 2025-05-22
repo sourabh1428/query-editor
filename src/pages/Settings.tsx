@@ -9,7 +9,7 @@ import { Moon, Sun, User, Lock, Mail } from 'lucide-react';
 import { useTheme } from '../components/theme-provider';
 
 const Settings: React.FC = () => {
-  const { user, updateProfile } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const [username, setUsername] = useState(user?.username || '');

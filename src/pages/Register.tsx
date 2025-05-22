@@ -17,7 +17,10 @@ const Register: React.FC = () => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast({
+        description: "Passwords do not match",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -25,10 +28,9 @@ const Register: React.FC = () => {
     
     try {
       await register(username, email, password);
-      toast.success('Registration successful!');
       navigate('/');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Registration failed');
+    } catch (error) {
+      // Error is already handled in AuthContext
     } finally {
       setLoading(false);
     }

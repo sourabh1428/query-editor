@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: sql-analytics-platform
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: VITE_API_URL
+        value: https://sql-analytics-platform.onrender.com
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        value: postgresql://ijp_user:JbufturibQwmucF0vl62pbzkBW6l1a9f@dpg-d0nimqmuk2gs73c1c6rg-a/ijp
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+
+  - type: postgresql
+    name: sql-analytics-db
+    plan: free
+    ipAllowList: []
+    region: oregon

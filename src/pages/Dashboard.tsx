@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Moon, Sun, LayoutDashboard, History, Database, Settings, LogOut, Download, Trash2, Clock, XCircle, Play, Copy, Loader2 } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import QueryEditor from '../components/QueryEditor';
+import { useTheme } from '../components/theme-provider';
+import { toast } from '../components/ui/use-toast';
 import QueryResults from '../components/QueryResults';
 import QueryHistory from '../components/QueryHistory';
 import SchemaExplorer from '../components/SchemaExplorer';
 import axios from 'axios';
 import { useToast } from '../components/ui/use-toast';
-import { useAuth } from '../contexts/AuthContext';
-import { Button } from '../components/ui/button';
-import { Moon, Sun, LayoutDashboard, History, Database, Settings, LogOut, ChevronRight, Star, Download, Trash2, Clock, CheckCircle, XCircle, Play, Save, Copy, Check, Loader2, Maximize2, Minimize2 } from 'lucide-react';
-import { useTheme } from '../components/theme-provider';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { CardHeader, CardTitle } from '../components/ui/card';
 
 interface QueryResult {
   [key: string]: any;
@@ -255,7 +258,7 @@ const Dashboard: React.FC = () => {
       {/* Sidebar */}
       <aside className="fixed top-0 left-0 h-screen w-64 bg-card border-r flex flex-col overflow-y-auto">
         <div className="p-6 border-b">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">
             SQL Explorer
           </h1>
         </div>

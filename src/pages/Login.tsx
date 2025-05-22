@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Database, Mail, Lock } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -17,10 +16,9 @@ const Login: React.FC = () => {
     
     try {
       await login(email, password);
-      toast.success('Login successful!');
       navigate('/');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Login failed');
+    } catch (error) {
+      // Error is already handled in AuthContext
     } finally {
       setLoading(false);
     }
