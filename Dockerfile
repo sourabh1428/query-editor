@@ -97,10 +97,15 @@ RUN cd backend && \
     . /opt/venv/bin/activate && \
     pip3 install --no-cache-dir -r requirements.txt
 
-# Create startup script
+# Create startup script with Redis debugging
 RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'echo "Starting Redis..."' >> /app/start.sh && \
     echo 'redis-server --daemonize yes' >> /app/start.sh && \
+    echo 'sleep 2' >> /app/start.sh && \
+    echo 'redis-cli ping || echo "Redis failed to start"' >> /app/start.sh && \
+    echo 'echo "Starting backend..."' >> /app/start.sh && \
     echo 'cd /app/backend && . /opt/venv/bin/activate && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app &' >> /app/start.sh && \
+    echo 'echo "Starting frontend..."' >> /app/start.sh && \
     echo 'cd /app && npm run start' >> /app/start.sh && \
     chmod +x /app/start.sh
 
