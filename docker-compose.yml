@@ -14,7 +14,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - VITE_API_URL=https://sql-analytics-platform.onrender.com/api
+      - VITE_API_URL=http://localhost:5000/api
       - REDIS_HOST=localhost
       - REDIS_PORT=6379
 
