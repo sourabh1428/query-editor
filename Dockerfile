@@ -46,33 +46,20 @@ FROM python:3.9-slim
 
 WORKDIR /app/backend
 
-# Install system dependencies
+# Install system dependencies including Redis
 RUN apt-get update && apt-get install -y \
     build-essential \
+    redis-server \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements file
+# Copy requirements and install Python dependencies
 COPY backend/requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend code
 COPY backend/ .
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV FLASK_APP=app.py
-ENV FLASK_ENV=production
-ENV REDIS_HOST=localhost
-ENV REDIS_PORT=6379
-ENV DB_HOST=postgres
-ENV DB_PORT=5432
-ENV DB_USER=postgres
-ENV DB_PASSWORD=postgres
-ENV DB_NAME=sqlanalytics
-
-# Create Redis configuration
+# Configure Redis
 RUN echo "bind 0.0.0.0" > /etc/redis.conf && \
     echo "protected-mode no" >> /etc/redis.conf && \
     echo "port 6379" >> /etc/redis.conf
@@ -87,8 +74,17 @@ RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app' >> /app/start.sh && \
     chmod +x /app/start.sh
 
-# Expose port
+# Set environment variables
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=production
+ENV DB_HOST=postgres
+ENV DB_PORT=5432
+ENV DB_USER=postgres
+ENV DB_PASSWORD=postgres
+ENV DB_NAME=sqlanalytics
+ENV REDIS_HOST=localhost
+ENV REDIS_PORT=6379
+
 EXPOSE 5000
 
-# Start the application
-CMD ["/bin/sh", "/app/start.sh"]
+CMD ["/app/start.sh"]
