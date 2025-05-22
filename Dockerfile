@@ -18,6 +18,9 @@ COPY postcss.config.js .
 COPY tailwind.config.js .
 COPY index.html .
 
+# Create public directory if it doesn't exist
+RUN mkdir -p public
+
 # Copy source code
 COPY src/ src/
 
@@ -48,7 +51,9 @@ RUN npm ci --only=production
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public
+
+# Create public directory in runner stage
+RUN mkdir -p public
 
 # Set environment variables
 ENV NODE_ENV=production
