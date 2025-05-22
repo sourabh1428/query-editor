@@ -35,6 +35,9 @@ export function cn(...inputs: ClassValue[]) { \
 }' > src/lib/utils.ts; \
 fi
 
+# Set environment variables for frontend build
+ENV VITE_API_URL=http://localhost:5000/api
+
 # Build the application
 RUN npm run build
 

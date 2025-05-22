@@ -26,6 +26,9 @@ services:
       - PYTHONUNBUFFERED=1
       - FLASK_APP=app.py
       - FLASK_ENV=production
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
     networks:
       - app-network
     restart: unless-stopped
