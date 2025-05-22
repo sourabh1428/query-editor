@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Moon, Sun, LayoutDashboard, History, Database, Settings, LogOut, Download, Trash2, Clock, XCircle, Play, Copy, Loader2 } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, History, Database, Settings, LogOut, Download, Trash2, Clock, Play, Copy, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import QueryEditor from '../components/QueryEditor';
 import { useTheme } from '../components/theme-provider';
-import { toast } from '../components/ui/use-toast';
+import { useToast } from '../components/ui/use-toast';
 import QueryResults from '../components/QueryResults';
-import QueryHistory from '../components/QueryHistory';
 import SchemaExplorer from '../components/SchemaExplorer';
 import axios from 'axios';
-import { useToast } from '../components/ui/use-toast';
-import { CardHeader, CardTitle } from '../components/ui/card';
 
 interface QueryResult {
   [key: string]: any;
@@ -141,33 +137,6 @@ const Dashboard: React.FC = () => {
       console.error('Error fetching table schema:', error);
     } finally {
       setSchemaLoading(false);
-    }
-  };
-
-  const handleHistoryItemClick = (queryText: string) => {
-    setQuery(queryText);
-    setActiveTab('editor');
-  };
-
-  const toggleFavorite = async (queryId: number) => {
-    try {
-      await axios.put(`${API_URL}/api/queries/${queryId}/favorite`, {}, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      fetchHistory();
-      toast({
-        title: "Success",
-        description: "Query favorite status updated",
-      });
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update favorite status",
-        variant: "destructive",
-      });
     }
   };
 
