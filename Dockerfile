@@ -85,6 +85,8 @@ ENV VITE_API_URL=https://sql-analytics-platform.onrender.com/api
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
+ENV REDIS_HOST=redis
+ENV REDIS_PORT=6379
 
 # Install Python and backend dependencies in production
 RUN apk add --no-cache python3 py3-pip && \
@@ -98,4 +100,4 @@ EXPOSE 3000
 EXPOSE 5000
 
 # Start both frontend and backend
-CMD sh -c "cd backend && . /opt/venv/bin/activate && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app & cd .. && npm run start"
+CMD sh -c "cd backend && . /opt/venv/bin/activate && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app & cd /app && npm run start"
