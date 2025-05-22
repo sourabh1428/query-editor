@@ -1,7 +1,7 @@
 import os
 import jwt
 from functools import wraps
-from flask import request, jsonify
+from flask import request, jsonify, make_response
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,6 +11,10 @@ JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key")
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        # Handle preflight requests
+        if request.method == 'OPTIONS':
+            return make_response(), 200
+
         token = None
 
         # Get token from Authorization header

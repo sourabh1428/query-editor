@@ -34,7 +34,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token] = useState<string | null>(localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -42,70 +42,97 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const token = localStorage.getItem("token");
     if (token) {
       fetch(`${API_URL}/users/me`, {
+        method: 'GET',
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
       })
         .then((res) => res.json())
-        .then((data) => setUser(data))
+        .then((data) => {
+          setUser(data);
+          setToken(token);
+        })
         .catch(() => {
           localStorage.removeItem("token");
           setUser(null);
+          setToken(null);
         });
     }
     setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await fetch(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const url = `${API_URL}/auth/login`;
+      console.log('Attempting login with URL:', url);
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (!response.ok) {
-      throw new Error("Invalid credentials");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Invalid credentials");
+      }
+
+      const data = await response.json();
+      localStorage.setItem("token", data.token);
+      setToken(data.token);
+      setUser(data.user);
+
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-
-    const data = await response.json();
-    localStorage.setItem("token", data.token);
-    setUser(data.user);
-
-    toast({
-      title: "Welcome back!",
-      description: "You have successfully logged in.",
-      variant: "default",
-    });
   };
 
   const register = async (username: string, email: string, password: string) => {
-    const response = await fetch(`${API_URL}/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username, email, password }),
-    });
+    try {
+      const url = `${API_URL}/auth/register`;
+      console.log('Attempting registration with URL:', url);
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, email, password }),
+      });
 
-    if (!response.ok) {
-      throw new Error("Registration failed");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Registration failed");
+      }
+
+      const data = await response.json();
+      localStorage.setItem("token", data.token);
+      setToken(data.token);
+      setUser(data.user);
+
+      toast({
+        title: "Registration Successful!",
+        description: "You can now log in to your account.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
     }
-
-    const data = await response.json();
-    localStorage.setItem("token", data.token);
-    setUser(data.user);
-
-    toast({
-      title: "Registration Successful!",
-      description: "You can now log in to your account.",
-      variant: "default",
-    });
   };
 
   const logout = () => {
     localStorage.removeItem("token");
+    setToken(null);
     setUser(null);
 
     toast({

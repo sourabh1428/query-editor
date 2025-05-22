@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response
 import bcrypt
 import jwt
 import os
@@ -14,40 +14,24 @@ auth_bp = Blueprint('auth', __name__)
 
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key")
 
-@auth_bp.route('/register', methods=['POST'])
+def add_cors_headers(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
+
+@auth_bp.route('/register', methods=['POST', 'OPTIONS'])
 def register():
-    """
-    Register a new user
-    ---
-    tags:
-      - Auth
-    parameters:
-      - in: body
-        name: body
-        required: true
-        schema:
-          type: object
-          required:
-            - username
-            - email
-            - password
-          properties:
-            username:
-              type: string
-            email:
-              type: string
-            password:
-              type: string
-    responses:
-      201:
-        description: User registered successfully
-      400:
-        description: Invalid input or user already exists
-    """
+    if request.method == 'OPTIONS':
+        response = make_response()
+        return add_cors_headers(response)
+        
     try:
         data = request.get_json()
         if not data:
-            return jsonify({'message': 'No data provided'}), 400
+            response = jsonify({'message': 'No data provided'}), 400
+            return add_cors_headers(response)
 
         username = data.get('username')
         email = data.get('email')
@@ -56,7 +40,8 @@ def register():
         logger.info(f"Registration attempt for email: {email}")
         
         if not username or not email or not password:
-            return jsonify({'message': 'Username, email, and password are required'}), 400
+            response = jsonify({'message': 'Username, email, and password are required'}), 400
+            return add_cors_headers(response)
         
         # Check if user exists
         existing_user = query(
@@ -66,7 +51,8 @@ def register():
         
         if existing_user:
             logger.warning(f"Registration failed: User already exists with email {email}")
-            return jsonify({'message': 'User already exists'}), 400
+            response = jsonify({'message': 'User already exists'}), 400
+            return add_cors_headers(response)
         
         # Hash password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
@@ -77,47 +63,36 @@ def register():
             (username, email, hashed_password.decode('utf-8'))
         )
         
-        logger.info(f"User registered successfully: {email}")
-        return jsonify({
+        # Generate token
+        token = jwt.encode({
+            'id': result[0]['id'],
+            'username': result[0]['username'],
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1)
+        }, JWT_SECRET, algorithm='HS256')
+        
+        response = jsonify({
             'message': 'User registered successfully',
-            'user': result[0]
-        }), 201
+            'user': result[0],
+            'token': token
+        })
+        return add_cors_headers(response), 201
     
     except Exception as e:
         logger.error(f"Registration error: {str(e)}")
-        return jsonify({'message': 'An error occurred during registration'}), 500
+        response = jsonify({'message': 'An error occurred during registration'}), 500
+        return add_cors_headers(response)
 
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route('/login', methods=['POST', 'OPTIONS'])
 def login():
-    """
-    Login a user
-    ---
-    tags:
-      - Auth
-    parameters:
-      - in: body
-        name: body
-        required: true
-        schema:
-          type: object
-          required:
-            - email
-            - password
-          properties:
-            email:
-              type: string
-            password:
-              type: string
-    responses:
-      200:
-        description: Login successful
-      400:
-        description: Invalid credentials
-    """
+    if request.method == 'OPTIONS':
+        response = make_response()
+        return add_cors_headers(response)
+        
     try:
         data = request.get_json()
         if not data:
-            return jsonify({'message': 'No data provided'}), 400
+            response = jsonify({'message': 'No data provided'}), 400
+            return add_cors_headers(response)
 
         email = data.get('email')
         password = data.get('password')
@@ -125,7 +100,8 @@ def login():
         logger.info(f"Login attempt for email: {email}")
         
         if not email or not password:
-            return jsonify({'message': 'Email and password are required'}), 400
+            response = jsonify({'message': 'Email and password are required'}), 400
+            return add_cors_headers(response)
         
         # Get user
         users = query('SELECT * FROM users WHERE email = %s', (email,))
@@ -133,7 +109,8 @@ def login():
         
         if not users:
             logger.warning(f"Login failed: Invalid email {email}")
-            return jsonify({'message': 'Invalid email or password'}), 400
+            response = jsonify({'message': 'Invalid email or password'}), 400
+            return add_cors_headers(response)
         
         user = users[0]
         logger.info(f"User from DB: {user}")
@@ -144,7 +121,8 @@ def login():
         # Check password
         if not password_check:
             logger.warning(f"Login failed: Invalid password for email {email}")
-            return jsonify({'message': 'Invalid email or password'}), 400
+            response = jsonify({'message': 'Invalid email or password'}), 400
+            return add_cors_headers(response)
         
         # Generate token
         token = jwt.encode({
@@ -153,8 +131,7 @@ def login():
             'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1)
         }, JWT_SECRET, algorithm='HS256')
         
-        logger.info(f"User logged in successfully: {email}")
-        return jsonify({
+        response = jsonify({
             'message': 'Login successful',
             'token': token,
             'user': {
@@ -162,8 +139,10 @@ def login():
                 'username': user['username'],
                 'email': user['email']
             }
-        }), 200
+        })
+        return add_cors_headers(response), 200
     
     except Exception as e:
         logger.error(f"Login error: {str(e)}")
-        return jsonify({'message': 'An error occurred during login'}), 500
+        response = jsonify({'message': 'An error occurred during login'}), 500
+        return add_cors_headers(response)

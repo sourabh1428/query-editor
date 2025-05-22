@@ -21,6 +21,7 @@ const QueryHistory = () => {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
+          credentials: 'include',
         });
 
         if (!response.ok) {
@@ -48,34 +49,21 @@ const QueryHistory = () => {
           <CardTitle>Query History</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {queries.map((query) => (
-              <Card key={query.id}>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium">{query.query}</p>
-                      <p className="text-sm text-gray-500">
-                        Executed at: {new Date(query.executed_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <span
-                      className={`px-2 py-1 rounded text-sm ${
-                        query.status === 'success'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {query.status}
-                    </span>
+          {queries.length === 0 ? (
+            <p className="text-center text-gray-500">No queries found</p>
+          ) : (
+            <div className="space-y-4">
+              {queries.map((query) => (
+                <div key={query.id} className="border rounded-lg p-4">
+                  <p className="font-mono text-sm">{query.query}</p>
+                  <div className="mt-2 text-sm text-gray-500">
+                    <span>Executed: {new Date(query.executed_at).toLocaleString()}</span>
+                    <span className="ml-4">Status: {query.status}</span>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-            {queries.length === 0 && (
-              <p className="text-center text-gray-500">No queries found</p>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

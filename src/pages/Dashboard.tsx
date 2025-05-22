@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Moon, Sun, LayoutDashboard, History, Database, Settings, LogOut, Download, Trash2, Clock, Play, Copy, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import QueryEditor from '../components/QueryEditor';
 import { useTheme } from '../components/theme-provider';
@@ -10,8 +10,6 @@ import { useToast } from '../components/ui/use-toast';
 import QueryResults from '../components/QueryResults';
 import SchemaExplorer from '../components/SchemaExplorer';
 import axios from 'axios';
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
 import { API_URL } from "../config";
 
 interface QueryResult {
@@ -72,7 +70,8 @@ const Dashboard: React.FC = () => {
       }, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+        },
+        withCredentials: true
       });
       setResults(response.data.result);
       setActiveEditorTab('results');
@@ -98,7 +97,8 @@ const Dashboard: React.FC = () => {
       const response = await axios.get(`${API_URL}/queries/history`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        },
+        withCredentials: true
       });
       setHistory(response.data.history || []);
     } catch (error) {
@@ -118,7 +118,8 @@ const Dashboard: React.FC = () => {
       const response = await axios.get(`${API_URL}/schema/tables`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        },
+        withCredentials: true
       });
       setTables(response.data.tables || []);
     } catch (error) {
@@ -135,7 +136,12 @@ const Dashboard: React.FC = () => {
     setSchemaLoading(true);
     setSelectedTable(tableName);
     try {
-      const response = await axios.get(`${API_URL}/schema/tables/${tableName}`);
+      const response = await axios.get(`${API_URL}/schema/tables/${tableName}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        withCredentials: true
+      });
       setTableSchema(response.data);
     } catch (error) {
       console.error('Error fetching table schema:', error);
@@ -149,7 +155,8 @@ const Dashboard: React.FC = () => {
       await axios.delete(`${API_URL}/queries/${queryId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        },
+        withCredentials: true
       });
       fetchHistory();
       toast({
@@ -172,7 +179,8 @@ const Dashboard: React.FC = () => {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        responseType: 'blob'
+        responseType: 'blob',
+        withCredentials: true
       });
       
       const url = window.URL.createObjectURL(new Blob([response.data]));

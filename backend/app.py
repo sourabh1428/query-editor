@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
@@ -14,7 +14,19 @@ from routes.schema import schema_bp
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173","https://sql-analytics-platform.onrender.com/"])
+
+# Configure CORS to allow all origins
+CORS(app, 
+     resources={
+         r"/*": {
+             "origins": "*",
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": "*",
+             "supports_credentials": True,
+             "expose_headers": "*",
+             "max_age": 3600
+         }
+     })
 
 # Configure JWT
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET", "your-secret-key")
@@ -56,10 +68,22 @@ swagger_template = {
 
 swagger = Swagger(app, config=swagger_config, template=swagger_template)
 
-# Register blueprints
+# Register blueprints with explicit URL prefixes
 app.register_blueprint(auth_bp, url_prefix="/api/auth")
 app.register_blueprint(queries_bp, url_prefix="/api/queries")
 app.register_blueprint(schema_bp, url_prefix="/api/schema")
+
+# Add a catch-all route for OPTIONS requests
+@app.route('/', defaults={'path': ''}, methods=['OPTIONS'])
+@app.route('/<path:path>', methods=['OPTIONS'])
+def handle_options(path):
+    response = jsonify({'message': 'OK'})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Max-Age', '3600')
+    return response
 
 @app.route("/", methods=["GET"])
 def health_check():
