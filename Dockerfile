@@ -62,6 +62,9 @@ FROM node:18-alpine AS runner
 
 WORKDIR /app
 
+# Install Redis
+RUN apk add --no-cache redis
+
 # Copy package files
 COPY package*.json ./
 
@@ -85,7 +88,7 @@ ENV VITE_API_URL=https://sql-analytics-platform.onrender.com/api
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
-ENV REDIS_HOST=redis
+ENV REDIS_HOST=localhost
 ENV REDIS_PORT=6379
 
 # Install Python and backend dependencies in production
@@ -98,6 +101,14 @@ RUN apk add --no-cache python3 py3-pip && \
 # Expose ports
 EXPOSE 3000
 EXPOSE 5000
+EXPOSE 6379
+
+# Create a startup script
+RUN echo '#!/bin/sh\n\
+redis-server --daemonize yes\n\
+cd backend && . /opt/venv/bin/activate && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app & \
+cd /app && npm run start' > /app/start.sh && \
+chmod +x /app/start.sh
 
 # Start both frontend and backend
-CMD sh -c "cd backend && . /opt/venv/bin/activate && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app & cd /app && npm run start"
+CMD ["/app/start.sh"]
