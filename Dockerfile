@@ -36,7 +36,7 @@ export function cn(...inputs: ClassValue[]) { \
 fi
 
 # Set environment variables for frontend build
-ENV VITE_API_URL=http://localhost:5000/api
+ENV VITE_API_URL=https://sql-analytics-platform.onrender.com/api
 
 # Build the application
 RUN npm run build
@@ -87,7 +87,7 @@ COPY --from=backend-builder /app/backend ./backend
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOST=0.0.0.0
-ENV VITE_API_URL=http://localhost:5000/api
+ENV VITE_API_URL=https://sql-analytics-platform.onrender.com/api
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
