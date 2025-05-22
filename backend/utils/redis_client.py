@@ -19,7 +19,6 @@ class RedisClient:
         if cls._instance is None:
             cls._instance = super(RedisClient, cls).__new__(cls)
             cls._instance.client = None
-            cls._instance.connect_with_retry()
         return cls._instance
 
     def connect_with_retry(self):
@@ -48,40 +47,15 @@ class RedisClient:
 
     def get(self, key):
         """Get a value from Redis"""
-        if not self.client:
-            return None
-        
-        try:
-            data = self.client.get(key)
-            if data:
-                return json.loads(data)
-            return None
-        except Exception as e:
-            print(f"Redis get error: {e}")
-            return None
+        return None
 
     def set(self, key, value, expire=300):
         """Set a value in Redis with expiration"""
-        if not self.client:
-            return False
-        
-        try:
-            serialized = json.dumps(value)
-            return self.client.set(key, serialized, ex=expire)
-        except Exception as e:
-            print(f"Redis set error: {e}")
-            return False
+        return False
 
     def delete(self, key):
         """Delete a key from Redis"""
-        if not self.client:
-            return False
-        
-        try:
-            return self.client.delete(key)
-        except Exception as e:
-            print(f"Redis delete error: {e}")
-            return False
+        return False
 
 # Create a singleton instance
 redis_client = RedisClient()
