@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
 from flasgger import Swagger
 import os
@@ -15,23 +14,18 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configure CORS to allow all origins
+# Configure CORS to allow all origins with no restrictions
 CORS(app, 
      resources={
          r"/*": {
              "origins": "*",
-             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "methods": "*",
              "allow_headers": "*",
-             "supports_credentials": True,
              "expose_headers": "*",
+             "supports_credentials": True,
              "max_age": 3600
          }
      })
-
-# Configure JWT
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET", "your-secret-key")
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 60 * 60 * 24  # 1 day
-jwt = JWTManager(app)
 
 # Configure Swagger
 swagger_config = {
@@ -54,16 +48,7 @@ swagger_template = {
         "title": "SQL Analytics Platform API",
         "description": "API documentation for SQL Analytics Platform",
         "version": "1.0.0",
-    },
-    "securityDefinitions": {
-        "Bearer": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header",
-            "description": "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
-        }
-    },
-    "security": [{"Bearer": []}],
+    }
 }
 
 swagger = Swagger(app, config=swagger_config, template=swagger_template)
@@ -80,7 +65,7 @@ def handle_options(path):
     response = jsonify({'message': 'OK'})
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers', '*')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Methods', '*')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     response.headers.add('Access-Control-Max-Age', '3600')
     return response
