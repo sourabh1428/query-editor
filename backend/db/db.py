@@ -12,12 +12,8 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
-# Database connection parameters
-DB_HOST = os.getenv("DB_HOST", "postgres")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
-DB_NAME = os.getenv("DB_NAME", "sqlanalytics")
+# Get database URL from environment variable
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 MAX_RETRIES = 5
 RETRY_DELAY = 2  # seconds
@@ -26,15 +22,8 @@ def get_connection():
     """Create a database connection with retry logic"""
     for attempt in range(MAX_RETRIES):
         try:
-            logger.info(f"Attempting to connect to database at {DB_HOST}:{DB_PORT} (attempt {attempt + 1}/{MAX_RETRIES})")
-            conn = psycopg2.connect(
-                host=DB_HOST,
-                port=DB_PORT,
-                user=DB_USER,
-                password=DB_PASSWORD,
-                dbname=DB_NAME,
-                connect_timeout=10
-            )
+            logger.info(f"Attempting to connect to database (attempt {attempt + 1}/{MAX_RETRIES})")
+            conn = psycopg2.connect(DATABASE_URL)
             logger.info("Database connection successful")
             return conn
         except psycopg2.Error as e:

@@ -4,21 +4,19 @@ from psycopg2.extras import RealDictCursor
 import logging
 from datetime import datetime, timedelta
 import random
+from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Load environment variables
+load_dotenv()
+
 def get_db_connection():
     """Create a database connection."""
     try:
-        conn = psycopg2.connect(
-            host=os.getenv('DB_HOST', 'postgres'),
-            port=os.getenv('DB_PORT', '5432'),
-            database=os.getenv('DB_NAME', 'sqlanalytics'),
-            user=os.getenv('DB_USER', 'postgres'),
-            password=os.getenv('DB_PASSWORD', 'postgres')
-        )
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
         return conn
     except Exception as e:
         logger.error(f"Error connecting to database: {str(e)}")
