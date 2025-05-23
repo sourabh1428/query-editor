@@ -10,6 +10,9 @@ if [ -n "$BACKEND_URL" ]; then
     fi
     echo "Setting backend host to: $BACKEND_HOST"
     sed -i "s/set \$backend_host \"backend:5000\";/set \$backend_host \"$BACKEND_HOST\";/" /etc/nginx/conf.d/default.conf
+else
+    # In local development, use the container name
+    echo "Setting backend host to: backend:5000"
 fi
 
 # Wait for backend to be ready
@@ -18,18 +21,9 @@ MAX_RETRIES=30
 RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if [ -n "$BACKEND_URL" ]; then
-        # In production, use the BACKEND_URL for health check
-        if wget -q --spider "$BACKEND_URL/health" 2>/dev/null; then
-            echo "Backend is ready!"
-            break
-        fi
-    else
-        # In local development, use backend:5000
-        if wget -q --spider http://backend:5000/health 2>/dev/null; then
-            echo "Backend is ready!"
-            break
-        fi
+    if wget -q --spider http://backend:5000/health 2>/dev/null; then
+        echo "Backend is ready!"
+        break
     fi
     
     RETRY_COUNT=$((RETRY_COUNT + 1))
