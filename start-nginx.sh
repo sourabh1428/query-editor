@@ -8,6 +8,7 @@ if [ -n "$BACKEND_URL" ]; then
     if [[ ! $BACKEND_HOST =~ :[0-9]+$ ]]; then
         BACKEND_HOST="${BACKEND_HOST}:5000"
     fi
+    echo "Setting backend host to: $BACKEND_HOST"
     sed -i "s/set \$backend_host \"backend:5000\";/set \$backend_host \"$BACKEND_HOST\";/" /etc/nginx/conf.d/default.conf
 fi
 
@@ -15,13 +16,13 @@ fi
 echo "Waiting for backend to be ready..."
 if [ -n "$BACKEND_URL" ]; then
     # In production, use the BACKEND_URL for health check
-    while ! wget -q --spider "$BACKEND_URL/"; do
+    while ! wget -q --spider "$BACKEND_URL/health" 2>/dev/null; do
         echo "Backend not ready yet... waiting"
         sleep 2
     done
 else
     # In local development, use backend:5000
-    while ! wget -q --spider http://backend:5000/; do
+    while ! wget -q --spider http://backend:5000/health 2>/dev/null; do
         echo "Backend not ready yet... waiting"
         sleep 2
     done
