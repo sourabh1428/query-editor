@@ -10,11 +10,16 @@ interface RequestOptions {
 class ApiService {
   private getAuthHeaders(): Record<string, string> {
     const token = localStorage.getItem('token');
-    return {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
+      'Accept': 'application/json'
     };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
   }
 
   private async makeRequest(endpoint: string, options: RequestOptions = {}) {
@@ -26,7 +31,9 @@ class ApiService {
     } = options;
 
     const url = `${API_URL}${endpoint}`;
-    console.log(`API Request: ${method} ${url}`);
+    console.log(`🚀 API Request: ${method} ${url}`);
+    console.log(`🔍 API URL from config: ${API_URL}`);
+    console.log(`🌐 Current origin: ${window.location.origin}`);
 
     const config: RequestInit = {
       method,
@@ -34,18 +41,44 @@ class ApiService {
         ...this.getAuthHeaders(),
         ...headers
       },
+      mode: 'cors',
       credentials: 'include'
     };
 
     if (body && method !== 'GET') {
       config.body = JSON.stringify(body);
+      console.log(`📤 Request body:`, body);
     }
 
+    console.log(`📋 Full request config:`, {
+      url,
+      method,
+      headers: config.headers,
+      mode: config.mode,
+      credentials: config.credentials,
+      body: body ? JSON.stringify(body) : undefined
+    });
+
     try {
+      console.log(`⏳ Starting fetch request...`);
       const response = await fetch(url, config);
+      
+      console.log(`📥 Response received:`);
+      console.log(`  Status: ${response.status} ${response.statusText}`);
+      console.log(`  OK: ${response.ok}`);
+      console.log(`  Type: ${response.type}`);
+      console.log(`  URL: ${response.url}`);
+      
+      // Log all response headers
+      console.log(`📥 Response headers:`);
+      response.headers.forEach((value, key) => {
+        console.log(`  ${key}: ${value}`);
+      });
       
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`❌ Response error text:`, errorText);
+        
         let errorMessage = 'Request failed';
         try {
           const errorData = JSON.parse(errorText);
@@ -57,12 +90,41 @@ class ApiService {
       }
 
       if (responseType === 'blob') {
-        return response.blob();
+        const blobData = await response.blob();
+        console.log(`✅ Blob response received, size: ${blobData.size}`);
+        return blobData;
       }
 
-      return response.json();
+      const responseData = await response.json();
+      console.log(`✅ JSON response data:`, responseData);
+      return responseData;
     } catch (error) {
-      console.error(`API Error: ${method} ${url}`, error);
+      console.error(`❌ API Error Details:`);
+      console.error(`  Method: ${method}`);
+      console.error(`  URL: ${url}`);
+      console.error(`  Error:`, error);
+      console.error(`  Error type:`, typeof error);
+      console.error(`  Error name:`, error instanceof Error ? error.name : 'Unknown');
+      console.error(`  Error message:`, error instanceof Error ? error.message : String(error));
+      
+      // More detailed error analysis
+      if (error instanceof TypeError) {
+        console.error('🚫 TypeError detected - likely network/CORS issue');
+        console.error('🔍 Check:');
+        console.error('  1. Backend is running on:', API_URL);
+        console.error('  2. CORS configuration allows origin:', window.location.origin);
+        console.error('  3. Network connectivity');
+      }
+      
+      // Check if it's a CORS-specific error
+      if (error instanceof Error && error.message.includes('CORS')) {
+        console.error('🚫 CORS error specifically detected');
+      }
+      
+      if (error instanceof Error && error.message.includes('fetch')) {
+        console.error('🚫 Fetch error - network or CORS related');
+      }
+      
       throw error;
     }
   }

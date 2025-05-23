@@ -14,24 +14,66 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configure CORS for both development and production
-allowed_origins = [
-    'http://localhost:5173', 
-    'http://localhost:3000',
-    'http://localhost',        # Docker frontend on port 80
-    'http://127.0.0.1:5173',
-    'https://sql-analytics-platform.onrender.com'  # Production frontend URL
-]
-
-# Add environment-specific origin if set
-if os.getenv('FRONTEND_URL'):
-    allowed_origins.append(os.getenv('FRONTEND_URL'))
-
-CORS(app, 
+# Ultra-permissive CORS for debugging
+CORS(app,
+     origins=True,  # Allow all origins
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
+     allow_headers=["*"],  # Allow all headers
      supports_credentials=True,
-     origins=allowed_origins,
-     allow_headers=['Content-Type', 'Authorization'],
-     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+     send_wildcard=False,
+     max_age=0,  # Disable caching for debugging
+     automatic_options=True)
+
+# Comprehensive request/response logging
+@app.before_request
+def log_request():
+    print("=" * 80)
+    print(f"🔍 INCOMING REQUEST")
+    print(f"Method: {request.method}")
+    print(f"Path: {request.path}")
+    print(f"Origin: {request.headers.get('Origin', 'NONE')}")
+    print(f"User-Agent: {request.headers.get('User-Agent', 'NONE')}")
+    print(f"Content-Type: {request.headers.get('Content-Type', 'NONE')}")
+    print(f"All Headers:")
+    for header, value in request.headers:
+        print(f"  {header}: {value}")
+    print("=" * 80)
+
+@app.after_request
+def log_response(response):
+    print("=" * 80)
+    print(f"📤 OUTGOING RESPONSE")
+    print(f"Status: {response.status_code}")
+    print(f"Content-Type: {response.content_type}")
+    print(f"Response Headers:")
+    for header, value in response.headers:
+        print(f"  {header}: {value}")
+    
+    # Force add CORS headers manually as backup
+    origin = request.headers.get('Origin')
+    if origin:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With'
+        print(f"🔧 MANUALLY ADDED CORS HEADERS for origin: {origin}")
+    
+    print("=" * 80)
+    return response
+
+# Manual OPTIONS handler as backup
+@app.route('/api/auth/login', methods=['OPTIONS'])
+def handle_login_options():
+    print("🚀 MANUAL OPTIONS HANDLER TRIGGERED")
+    response = jsonify({'message': 'OK'})
+    origin = request.headers.get('Origin', '*')
+    response.headers['Access-Control-Allow-Origin'] = origin
+    response.headers['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Max-Age'] = '0'
+    print(f"🔧 Manual OPTIONS response for origin: {origin}")
+    return response
 
 # Configure Swagger
 swagger_config = {
