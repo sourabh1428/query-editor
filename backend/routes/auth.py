@@ -67,7 +67,7 @@ def register():
         
         # Create user
         result = query(
-            'INSERT INTO users (username, email, password) VALUES (%s, %s, %s) RETURNING id, username, email',
+            'INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s) RETURNING id, username, email',
             (username, email, hashed_password.decode('utf-8'))
         )
         
@@ -122,11 +122,11 @@ def login():
         
         user = users[0]
         logger.info(f"User from DB: {user}")
-        logger.info(f"Password from DB: {user['password']}")
-        password_check = bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8'))
-        logger.info(f"Password check result: {password_check}")
         
         # Check password
+        password_check = bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8'))
+        logger.info(f"Password check result: {password_check}")
+        
         if not password_check:
             logger.warning(f"Login failed: Invalid password for email {email}")
             response = jsonify({'message': 'Invalid email or password'}), 400
@@ -136,6 +136,8 @@ def login():
         token = jwt.encode({
             'id': user['id'],
             'username': user['username'],
+            'email': user['email'],
+            'userType': user['user_type'],
             'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1)
         }, JWT_SECRET, algorithm='HS256')
         
@@ -145,7 +147,8 @@ def login():
             'user': {
                 'id': user['id'],
                 'username': user['username'],
-                'email': user['email']
+                'email': user['email'],
+                'userType': user['user_type']
             }
         })
         return add_cors_headers(response), 200

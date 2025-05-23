@@ -33,6 +33,8 @@ RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'redis-cli ping || echo "Redis failed to start"' >> /app/start.sh && \
     echo 'echo "Waiting for database..."' >> /app/start.sh && \
     echo 'wait-for-it.sh ${DB_HOST}:${DB_PORT} -t 60 --' >> /app/start.sh && \
+    echo 'echo "Initializing database..."' >> /app/start.sh && \
+    echo 'python db/init_db.py' >> /app/start.sh && \
     echo 'echo "Starting backend..."' >> /app/start.sh && \
     echo 'gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app' >> /app/start.sh && \
     chmod +x /app/start.sh
