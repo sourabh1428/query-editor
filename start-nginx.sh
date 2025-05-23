@@ -16,14 +16,14 @@ case "$BACKEND_HOST" in
   *) BACKEND_HOST="${BACKEND_HOST}:5000" ;;
 esac
 
-# Set the BACKEND_URL environment variable for Nginx
-export BACKEND_URL="http://${BACKEND_HOST}"
+# Set the backend_url environment variable for Nginx
+export backend_url="http://${BACKEND_HOST}"
 
 # Wait for backend to be ready
 MAX_RETRIES=30
 RETRY_COUNT=0
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-  if wget -q --spider "${BACKEND_URL}/health"; then
+  if wget -q --spider "http://${BACKEND_HOST}/health"; then
     echo "Backend is ready!"
     break
   fi
