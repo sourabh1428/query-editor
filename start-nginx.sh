@@ -42,6 +42,6 @@ if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
     exit 1
 fi
 
-# Start Nginx
+# Start Nginx with debug logging
 echo "Starting Nginx..."
-exec nginx -g 'daemon off;' 
+exec nginx -g 'daemon off; error_log /dev/stderr debug;' 
