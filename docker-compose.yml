@@ -23,6 +23,8 @@ services:
       dockerfile: Dockerfile.frontend
     ports:
       - "80:80"
+    environment:
+      - backend_url=http://backend:5000
     depends_on:
       - backend
     networks:
