@@ -7,7 +7,7 @@ if [ -z "$BACKEND_URL" ]; then
   exit 1
 fi
 
-# Remove protocol (http:// or https://)
+# Remove protocol (http:// or https://) and ensure proper format
 BACKEND_HOST=$(echo "$BACKEND_URL" | sed -e 's|^https\?://||')
 
 # Append :5000 if no port is present
@@ -16,15 +16,14 @@ case "$BACKEND_HOST" in
   *) BACKEND_HOST="${BACKEND_HOST}:5000" ;;
 esac
 
-# Replace placeholder in nginx config
-grep -q BACKEND_PLACEHOLDER /etc/nginx/conf.d/default.conf && \
-  sed -i "s|BACKEND_PLACEHOLDER|$BACKEND_HOST|g" /etc/nginx/conf.d/default.conf
+# Set the BACKEND_URL environment variable for Nginx
+export BACKEND_URL="http://${BACKEND_HOST}"
 
 # Wait for backend to be ready
 MAX_RETRIES=30
 RETRY_COUNT=0
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-  if wget -q --spider "http://$BACKEND_HOST/health"; then
+  if wget -q --spider "${BACKEND_URL}/health"; then
     echo "Backend is ready!"
     break
   fi
