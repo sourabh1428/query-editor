@@ -14,20 +14,33 @@ fi
 
 # Wait for backend to be ready
 echo "Waiting for backend to be ready..."
-if [ -n "$BACKEND_URL" ]; then
-    # In production, use the BACKEND_URL for health check
-    while ! wget -q --spider "$BACKEND_URL/health" 2>/dev/null; do
-        echo "Backend not ready yet... waiting"
-        sleep 2
-    done
-else
-    # In local development, use backend:5000
-    while ! wget -q --spider http://backend:5000/health 2>/dev/null; do
-        echo "Backend not ready yet... waiting"
-        sleep 2
-    done
+MAX_RETRIES=30
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if [ -n "$BACKEND_URL" ]; then
+        # In production, use the BACKEND_URL for health check
+        if wget -q --spider "$BACKEND_URL/health" 2>/dev/null; then
+            echo "Backend is ready!"
+            break
+        fi
+    else
+        # In local development, use backend:5000
+        if wget -q --spider http://backend:5000/health 2>/dev/null; then
+            echo "Backend is ready!"
+            break
+        fi
+    fi
+    
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    echo "Backend not ready yet... waiting (attempt $RETRY_COUNT/$MAX_RETRIES)"
+    sleep 2
+done
+
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+    echo "Backend failed to become ready after $MAX_RETRIES attempts"
+    exit 1
 fi
-echo "Backend is ready!"
 
 # Start Nginx
 echo "Starting Nginx..."

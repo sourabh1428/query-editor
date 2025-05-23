@@ -86,8 +86,12 @@ def handle_options(path):
     return response
 
 @app.route("/", methods=["GET"])
-def health_check():
+def root_health_check():
     return jsonify({"status": "healthy", "message": "SQL Analytics API is running"})
+
+@app.route('/health')
+def health_check():
+    return jsonify({"status": "healthy"}), 200
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
