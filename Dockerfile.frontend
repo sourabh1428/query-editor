@@ -24,15 +24,10 @@ RUN mkdir -p public
 # Copy source code
 COPY src/ src/
 
-# Verify the utils file exists and create it if it doesn't
+# Create utils.ts if it doesn't exist
 RUN if [ ! -f src/lib/utils.ts ]; then \
     mkdir -p src/lib && \
-    echo 'import { type ClassValue, clsx } from "clsx"; \
-import { twMerge } from "tailwind-merge"; \
-\
-export function cn(...inputs: ClassValue[]) { \
-  return twMerge(clsx(inputs)); \
-}' > src/lib/utils.ts; \
+    echo "export function cn(...classes: string[]) { return classes.filter(Boolean).join(' '); }" > src/lib/utils.ts; \
 fi
 
 # Set environment variables for frontend build
