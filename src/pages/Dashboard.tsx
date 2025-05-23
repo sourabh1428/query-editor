@@ -9,8 +9,7 @@ import { useTheme } from '../components/theme-provider';
 import { useToast } from '../components/ui/use-toast';
 import QueryResults from '../components/QueryResults';
 import SchemaExplorer from '../components/SchemaExplorer';
-import axios from 'axios';
-import { API_URL } from "../config";
+import { apiService } from '../services/api';
 
 interface QueryResult {
   [key: string]: any;
@@ -65,15 +64,8 @@ const Dashboard: React.FC = () => {
     }
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/queries/execute`, {
-        query
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        withCredentials: true
-      });
-      setResults(response.data.result);
+      const data = await apiService.executeQuery(query);
+      setResults(data.result);
       setActiveEditorTab('results');
       toast({
         title: "Success",
@@ -83,7 +75,7 @@ const Dashboard: React.FC = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.response?.data?.message || 'Error executing query',
+        description: error.message || 'Error executing query',
         variant: "destructive",
       });
     } finally {
@@ -94,13 +86,8 @@ const Dashboard: React.FC = () => {
   const fetchHistory = async () => {
     setHistoryLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/queries/history`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        withCredentials: true
-      });
-      setHistory(response.data.history || []);
+      const data = await apiService.getQueryHistory();
+      setHistory(data.history || []);
     } catch (error) {
       console.error('Error fetching history:', error);
       toast({
@@ -115,13 +102,8 @@ const Dashboard: React.FC = () => {
 
   const fetchTables = async () => {
     try {
-      const response = await axios.get(`${API_URL}/schema/tables`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        withCredentials: true
-      });
-      setTables(response.data.tables || []);
+      const data = await apiService.getTables();
+      setTables(data.tables || []);
     } catch (error) {
       console.error('Error fetching tables:', error);
       toast({
@@ -136,13 +118,8 @@ const Dashboard: React.FC = () => {
     setSchemaLoading(true);
     setSelectedTable(tableName);
     try {
-      const response = await axios.get(`${API_URL}/schema/tables/${tableName}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        withCredentials: true
-      });
-      setTableSchema(response.data);
+      const data = await apiService.getTableSchema(tableName);
+      setTableSchema(data);
     } catch (error) {
       console.error('Error fetching table schema:', error);
     } finally {
@@ -152,12 +129,7 @@ const Dashboard: React.FC = () => {
 
   const deleteQuery = async (queryId: number) => {
     try {
-      await axios.delete(`${API_URL}/queries/${queryId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        withCredentials: true
-      });
+      await apiService.deleteQuery(queryId);
       fetchHistory();
       toast({
         title: "Success",
@@ -175,15 +147,9 @@ const Dashboard: React.FC = () => {
 
   const downloadResults = async (queryId: number) => {
     try {
-      const response = await axios.get(`${API_URL}/queries/${queryId}/download`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        responseType: 'blob',
-        withCredentials: true
-      });
+      const blob = await apiService.downloadQueryResults(queryId);
       
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `query-results-${queryId}.csv`);

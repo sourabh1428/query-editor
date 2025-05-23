@@ -1,4 +1,5 @@
 services:
+  # Frontend service
   - type: web
     name: sql-analytics-platform
     env: docker
@@ -10,9 +11,9 @@ services:
         value: https://sql-analytics-platform-api.onrender.com/api
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3000
-    healthCheckPath: /
+    dockerContext: .
+    dockerCommand: ""
+    healthCheckPath: /health
     autoDeploy: true
     branch: main
     buildFilter:
@@ -24,6 +25,7 @@ services:
         - tsconfig.json
         - vite.config.ts
         - Dockerfile
+        - nginx.conf
         - render.yaml
     headers:
       - path: /*
@@ -34,8 +36,12 @@ services:
         value: nosniff
       - path: /*
         name: X-XSS-Protection
-        value: 1; mode=block
+        value: "1; mode=block"
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
 
+  # Backend service
   - type: web
     name: sql-analytics-platform-api
     env: docker
@@ -47,33 +53,23 @@ services:
         generateValue: true
       - key: DATABASE_URL
         value: postgresql://ijp_user:JbufturibQwmucF0vl62pbzkBW6l1a9f@dpg-d0nimqmuk2gs73c1c6rg-a/ijp
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 5000
       - key: FLASK_APP
         value: app.py
       - key: FLASK_ENV
         value: production
+      - key: PORT
+        value: 5000
+      - key: FRONTEND_URL
+        value: https://sql-analytics-platform.onrender.com
     healthCheckPath: /api/health
     autoDeploy: true
     branch: main
     buildFilter:
       paths:
         - backend/**
-        - requirements.txt
         - render.yaml
-    headers:
-      - path: /*
-        name: Access-Control-Allow-Origin
-        value: "*"
-      - path: /*
-        name: Access-Control-Allow-Methods
-        value: "GET, POST, PUT, DELETE, OPTIONS"
-      - path: /*
-        name: Access-Control-Allow-Headers
-        value: "Content-Type, Authorization"
 
+  # Database service
   - type: postgresql
     name: sql-analytics-db
     plan: free

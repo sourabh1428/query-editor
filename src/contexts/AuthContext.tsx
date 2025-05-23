@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { API_URL } from "../config";
 import { useToast } from '../components/ui/use-toast';
+import { apiService } from '../services/api';
 
 interface User {
   id: number;
@@ -41,31 +41,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      fetch(`${API_URL}/users/me`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        mode: 'cors'
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error('Session expired');
-          return res.json();
-        })
-        .then((data) => {
-          setUser(data);
-          setToken(token);
-        })
-        .catch((error) => {
-          console.error('Error fetching user data:', error);
-          localStorage.removeItem("token");
-          setUser(null);
-          setToken(null);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+      // Note: We'll need to add a /users/me endpoint or handle auth validation differently
+      setLoading(false);
     } else {
       setLoading(false);
     }
@@ -73,35 +50,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const url = `${API_URL}/auth/login`;
-      console.log('Attempting login with URL:', url);
+      const data = await apiService.login(email, password);
       
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json" 
-        },
-        body: JSON.stringify({ email, password }),
-        mode: 'cors'
-      });
-
-      console.log('Login response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Login error response:', errorText);
-        let errorMessage = "Invalid credentials";
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          // If the response is not JSON, use the error text
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
       localStorage.setItem("token", data.token);
       setToken(data.token);
       setUser(data.user);
@@ -124,35 +74,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (username: string, email: string, password: string) => {
     try {
-      const url = `${API_URL}/auth/register`;
-      console.log('Attempting registration with URL:', url);
+      const data = await apiService.register(username, email, password);
       
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({ username, email, password }),
-        mode: 'cors'
-      });
-
-      console.log('Register response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Registration error response:', errorText);
-        let errorMessage = "Registration failed";
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          // If the response is not JSON, use the error text
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
       localStorage.setItem("token", data.token);
       setToken(data.token);
       setUser(data.user);

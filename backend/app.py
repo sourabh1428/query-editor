@@ -14,18 +14,23 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configure CORS to allow all origins with no restrictions
+# Configure CORS for both development and production
+allowed_origins = [
+    'http://localhost:5173', 
+    'http://localhost:3000', 
+    'http://127.0.0.1:5173',
+    'https://sql-analytics-platform.onrender.com'  # Production frontend URL
+]
+
+# Add environment-specific origin if set
+if os.getenv('FRONTEND_URL'):
+    allowed_origins.append(os.getenv('FRONTEND_URL'))
+
 CORS(app, 
-     resources={
-         r"/*": {
-             "origins": "*",
-             "methods": "*",
-             "allow_headers": "*",
-             "expose_headers": "*",
-             "supports_credentials": True,
-             "max_age": 3600
-         }
-     })
+     supports_credentials=True,
+     origins=allowed_origins,
+     allow_headers=['Content-Type', 'Authorization'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 
 # Configure Swagger
 swagger_config = {
@@ -58,18 +63,6 @@ app.register_blueprint(auth_bp, url_prefix="/api/auth")
 app.register_blueprint(queries_bp, url_prefix="/api/queries")
 app.register_blueprint(schema_bp, url_prefix="/api/schema")
 
-# Add a catch-all route for OPTIONS requests
-@app.route('/', defaults={'path': ''}, methods=['OPTIONS'])
-@app.route('/<path:path>', methods=['OPTIONS'])
-def handle_options(path):
-    response = jsonify({'message': 'OK'})
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', '*')
-    response.headers.add('Access-Control-Allow-Methods', '*')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    response.headers.add('Access-Control-Max-Age', '3600')
-    return response
-
 @app.route("/", methods=["GET"])
 def root_health_check():
     return jsonify({"status": "healthy", "message": "SQL Analytics API is running"})
@@ -78,6 +71,11 @@ def root_health_check():
 def health_check():
     return jsonify({"status": "healthy"}), 200
 
+@app.route('/api/health')
+def api_health_check():
+    return jsonify({"status": "healthy", "message": "API is running"}), 200
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
+    print(f"Starting server on port {port}")
     app.run(host="0.0.0.0", port=port, debug=True)
