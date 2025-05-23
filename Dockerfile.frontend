@@ -45,14 +45,11 @@ RUN apk add --no-cache wget
 # Copy the built frontend files
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
-# Create a default nginx configuration
-RUN echo "# This file will be replaced by start-nginx.sh" > /etc/nginx/conf.d/default.conf
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 80
 EXPOSE 80
 
-COPY start-nginx.sh /start-nginx.sh
-RUN chmod +x /start-nginx.sh
-
-# Use the startup script as the entrypoint
-ENTRYPOINT ["/start-nginx.sh"] 
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"] 
