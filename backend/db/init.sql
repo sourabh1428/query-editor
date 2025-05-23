@@ -35,12 +35,6 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Create a trigger to automatically update the updated_at column
-CREATE TRIGGER update_users_updated_at
-    BEFORE UPDATE ON users
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
 -- Insert a default admin user (password: 123123)
 INSERT INTO users (username, email, password_hash, user_type)
 VALUES (

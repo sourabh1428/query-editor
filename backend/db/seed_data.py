@@ -1,4 +1,5 @@
 import os
+
 import bcrypt
 import psycopg2
 import logging

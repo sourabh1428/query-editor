@@ -1,30 +1,77 @@
--- Customers table
+-- Create sample tables with data
+
+-- Create customers table
 CREATE TABLE IF NOT EXISTS customers (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100),
-    email VARCHAR(100),
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
     city VARCHAR(50),
-    signup_date DATE
+    country VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Products table
+-- Create products table
 CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100),
-    category VARCHAR(50),
-    price NUMERIC(10,2),
-    in_stock BOOLEAN
+    name VARCHAR(100) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    stock_quantity INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Orders table
+-- Create orders table
 CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
     customer_id INTEGER REFERENCES customers(id),
-    product_id INTEGER REFERENCES products(id),
-    order_date DATE,
-    quantity INTEGER,
-    total NUMERIC(10,2)
+    order_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    total_amount DECIMAL(10,2) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending'
 );
+
+-- Create order_items table
+CREATE TABLE IF NOT EXISTS order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(id),
+    product_id INTEGER REFERENCES products(id),
+    quantity INTEGER NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL
+);
+
+-- Insert sample data into customers
+INSERT INTO customers (name, email, city, country) VALUES
+    ('John Doe', 'john@example.com', 'New York', 'USA'),
+    ('Jane Smith', 'jane@example.com', 'London', 'UK'),
+    ('Bob Johnson', 'bob@example.com', 'Paris', 'France'),
+    ('Alice Brown', 'alice@example.com', 'Berlin', 'Germany'),
+    ('Charlie Wilson', 'charlie@example.com', 'Tokyo', 'Japan');
+
+-- Insert sample data into products
+INSERT INTO products (name, category, price, stock_quantity) VALUES
+    ('Laptop', 'Electronics', 999.99, 50),
+    ('Smartphone', 'Electronics', 699.99, 100),
+    ('Headphones', 'Electronics', 199.99, 75),
+    ('Desk Chair', 'Furniture', 299.99, 30),
+    ('Coffee Table', 'Furniture', 199.99, 20),
+    ('Bookshelf', 'Furniture', 149.99, 15);
+
+-- Insert sample data into orders
+INSERT INTO orders (customer_id, total_amount, status) VALUES
+    (1, 1199.98, 'completed'),
+    (2, 699.99, 'completed'),
+    (3, 499.98, 'pending'),
+    (4, 299.99, 'completed'),
+    (5, 149.99, 'pending');
+
+-- Insert sample data into order_items
+INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES
+    (1, 1, 1, 999.99),
+    (1, 3, 1, 199.99),
+    (2, 2, 1, 699.99),
+    (3, 3, 2, 199.99),
+    (3, 4, 1, 299.99),
+    (4, 4, 1, 299.99),
+    (5, 6, 1, 149.99);
 
 -- Employees table
 CREATE TABLE IF NOT EXISTS employees (
@@ -52,24 +99,6 @@ CREATE TABLE IF NOT EXISTS queries (
     status VARCHAR(50)
 );
 
--- Insert sample data for customers
-INSERT INTO customers (name, email, city, signup_date)
-SELECT 
-    'Customer ' || g, 
-    'customer' || g || '@example.com', 
-    CASE WHEN g % 5 = 0 THEN 'New York' WHEN g % 5 = 1 THEN 'Los Angeles' WHEN g % 5 = 2 THEN 'Chicago' WHEN g % 5 = 3 THEN 'Houston' ELSE 'Phoenix' END,
-    DATE '2023-01-01' + (g % 365)
-FROM generate_series(1, 100) AS g;
-
--- Insert sample data for products
-INSERT INTO products (name, category, price, in_stock)
-SELECT 
-    'Product ' || g, 
-    CASE WHEN g % 3 = 0 THEN 'Electronics' WHEN g % 3 = 1 THEN 'Clothing' ELSE 'Books' END,
-    (10 + (g % 50) * 2.5),
-    (g % 2 = 0)
-FROM generate_series(1, 100) AS g;
-
 -- Insert sample data for departments
 INSERT INTO departments (name, location)
 SELECT 
@@ -85,16 +114,6 @@ SELECT
     (g % 10) + 1,
     DATE '2020-01-01' + (g % 100),
     40000 + (g % 20) * 2500
-FROM generate_series(1, 100) AS g;
-
--- Insert sample data for orders
-INSERT INTO orders (customer_id, product_id, order_date, quantity, total)
-SELECT 
-    (g % 100) + 1,
-    (g % 100) + 1,
-    DATE '2023-06-01' + (g % 60),
-    (g % 5) + 1,
-    ((g % 5) + 1) * (10 + (g % 50) * 2.5)
 FROM generate_series(1, 100) AS g;
 
 -- Insert sample data for queries

@@ -3,6 +3,7 @@ import logging
 import time
 import os
 from dotenv import load_dotenv
+from typing import Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -12,10 +13,43 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Redis connection parameters
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+REDIS_DB = int(os.getenv('REDIS_DB', 0))
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
 MAX_RETRIES = 10
 RETRY_DELAY = 2  # seconds
+
+# Create Redis client
+redis_client: Optional[redis.Redis] = None
+
+def get_redis_client() -> redis.Redis:
+    global redis_client
+    if redis_client is None:
+        max_retries = 10
+        retry_count = 0
+        while retry_count < max_retries:
+            try:
+                logger.info(f"Attempting to connect to Redis at {REDIS_HOST}:{REDIS_PORT} (attempt {retry_count + 1}/{max_retries})")
+                redis_client = redis.Redis(
+                    host=REDIS_HOST,
+                    port=REDIS_PORT,
+                    db=REDIS_DB,
+                    password=REDIS_PASSWORD,
+                    decode_responses=True
+                )
+                # Test connection
+                redis_client.ping()
+                logger.info("Successfully connected to Redis")
+                break
+            except redis.ConnectionError as e:
+                retry_count += 1
+                if retry_count == max_retries:
+                    logger.error(f"Failed to connect to Redis after {max_retries} attempts: {str(e)}")
+                    raise
+                logger.warning(f"Failed to connect to Redis (attempt {retry_count}/{max_retries}): {str(e)}")
+                time.sleep(2)  # Wait 2 seconds before retrying
+    return redis_client
 
 class RedisClient:
     _instance = None
@@ -35,6 +69,8 @@ class RedisClient:
                 self._client = redis.Redis(
                     host=REDIS_HOST,
                     port=REDIS_PORT,
+                    db=REDIS_DB,
+                    password=REDIS_PASSWORD,
                     decode_responses=True,
                     socket_timeout=5,
                     socket_connect_timeout=5
