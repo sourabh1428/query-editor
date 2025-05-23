@@ -16,8 +16,8 @@ case "$BACKEND_HOST" in
   *) BACKEND_HOST="${BACKEND_HOST}:5000" ;;
 esac
 
-# Set the backend_url environment variable for Nginx
-export backend_url="http://${BACKEND_HOST}"
+# Set the backend_host environment variable for Nginx
+export backend_host="$BACKEND_HOST"
 
 # Wait for backend to be ready
 MAX_RETRIES=30
