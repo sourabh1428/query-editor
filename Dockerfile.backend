@@ -2,11 +2,16 @@ FROM python:3.9-slim
 
 WORKDIR /app/backend
 
-# Install system dependencies including Redis
+# Install system dependencies including Redis and wait-for-it
 RUN apt-get update && apt-get install -y \
     build-essential \
     redis-server \
+    wget \
     && rm -rf /var/lib/apt/lists/*
+
+# Download wait-for-it script
+RUN wget https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh -O /usr/sbin/wait-for-it.sh \
+    && chmod +x /usr/sbin/wait-for-it.sh
 
 # Copy requirements and install Python dependencies
 COPY backend/requirements.txt .
@@ -26,6 +31,8 @@ RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'redis-server /etc/redis.conf --daemonize yes' >> /app/start.sh && \
     echo 'sleep 2' >> /app/start.sh && \
     echo 'redis-cli ping || echo "Redis failed to start"' >> /app/start.sh && \
+    echo 'echo "Waiting for database..."' >> /app/start.sh && \
+    echo 'wait-for-it.sh ${DB_HOST}:${DB_PORT} -t 60 --' >> /app/start.sh && \
     echo 'echo "Starting backend..."' >> /app/start.sh && \
     echo 'gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app' >> /app/start.sh && \
     chmod +x /app/start.sh
