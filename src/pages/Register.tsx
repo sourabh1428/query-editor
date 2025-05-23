@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { API_URL } from '../config';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -13,19 +14,20 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { register } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    
+    // Log the API URL to debug
+    console.log('Current API URL:', API_URL);
     
     if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
+      setError("Passwords do not match");
       return;
     }
     
@@ -34,11 +36,8 @@ const Register = () => {
       await register(username, email, password);
       navigate('/dashboard');
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Registration failed. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Registration error in component:', error);
+      setError(error instanceof Error ? error.message : 'Failed to register. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -58,6 +57,11 @@ const Register = () => {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {error && (
+              <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-600 text-sm">
+                {error}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="username" className="text-sm font-medium">Username</Label>
               <Input

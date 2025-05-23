@@ -46,20 +46,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-        }
+        },
+        mode: 'cors'
       })
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error('Session expired');
+          return res.json();
+        })
         .then((data) => {
           setUser(data);
           setToken(token);
         })
-        .catch(() => {
+        .catch((error) => {
+          console.error('Error fetching user data:', error);
           localStorage.removeItem("token");
           setUser(null);
           setToken(null);
+        })
+        .finally(() => {
+          setLoading(false);
         });
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -70,15 +79,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await fetch(url, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Accept": "application/json" 
         },
         body: JSON.stringify({ email, password }),
-        credentials: 'include'
+        mode: 'cors'
       });
 
+      console.log('Login response status:', response.status);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Invalid credentials");
+        const errorText = await response.text();
+        console.error('Login error response:', errorText);
+        let errorMessage = "Invalid credentials";
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // If the response is not JSON, use the error text
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -93,6 +113,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
     } catch (error) {
       console.error('Login error:', error);
+      toast({
+        title: "Login Failed",
+        description: error instanceof Error ? error.message : "An error occurred during login",
+        variant: "destructive",
+      });
       throw error;
     }
   };
@@ -105,15 +130,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await fetch(url, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify({ username, email, password }),
-        credentials: 'include'
+        mode: 'cors'
       });
 
+      console.log('Register response status:', response.status);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Registration failed");
+        const errorText = await response.text();
+        console.error('Registration error response:', errorText);
+        let errorMessage = "Registration failed";
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // If the response is not JSON, use the error text
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -123,11 +159,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       toast({
         title: "Registration Successful!",
-        description: "You can now log in to your account.",
+        description: "Your account has been created.",
         variant: "default",
       });
     } catch (error) {
       console.error('Registration error:', error);
+      toast({
+        title: "Registration Failed",
+        description: error instanceof Error ? error.message : "An error occurred during registration",
+        variant: "destructive",
+      });
       throw error;
     }
   };

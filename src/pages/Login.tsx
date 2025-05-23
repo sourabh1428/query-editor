@@ -6,11 +6,13 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
 import { useToast } from "../components/ui/use-toast";
+import { API_URL } from '../config';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -18,16 +20,17 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+    
+    // Log the API URL to debug
+    console.log('Current API URL:', API_URL);
     
     try {
       await login(email, password);
       navigate('/dashboard');
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Invalid email or password",
-        variant: "destructive",
-      });
+      console.error('Login error in component:', error);
+      setError(error instanceof Error ? error.message : 'Failed to log in. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -35,7 +38,10 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 to-gray-800">
-    
+      <div className="mb-8 text-center">
+        <h1 className="text-4xl font-bold text-white mb-2">SQL Analytics Platform</h1>
+        <p className="text-gray-400">Your powerful SQL query analysis tool</p>
+      </div>
       
       <Card className="w-[400px] border-t-4 border-t-blue-500 shadow-xl">
         <CardHeader className="space-y-2">
@@ -44,6 +50,11 @@ const Login: React.FC = () => {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {error && (
+              <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-600 text-sm">
+                {error}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">Email</Label>
               <Input
