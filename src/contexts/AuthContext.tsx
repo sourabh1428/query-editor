@@ -73,6 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ email, password }),
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -107,6 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ username, email, password }),
+        credentials: 'include'
       });
 
       if (!response.ok) {
