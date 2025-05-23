@@ -1,23 +1,13 @@
 #!/bin/sh
 set -e
 
-# Ensure BACKEND_URL is set
-if [ -z "$BACKEND_URL" ]; then
-  echo "Error: BACKEND_URL environment variable is not set."
-  exit 1
-fi
+# Hardcoded backend URL
+BACKEND_HOST="sql-analytics-platform.onrender.com:5000"
 
-# Remove protocol (http:// or https://) and ensure proper format
-BACKEND_HOST=$(echo "$BACKEND_URL" | sed -e 's|^https\?://||')
+echo "Using backend host: ${BACKEND_HOST}"
 
-# Append :5000 if no port is present
-case "$BACKEND_HOST" in
-  *:[0-9]*) ;;
-  *) BACKEND_HOST="${BACKEND_HOST}:5000" ;;
-esac
-
-# Create a temporary nginx config with the backend host
-cat > /etc/nginx/conf.d/default.conf << EOF
+# Create nginx config
+cat > /etc/nginx/conf.d/default.conf << 'EOF'
 # Use Docker's DNS resolver
 resolver 127.0.0.11 valid=30s;
 resolver_timeout 10s;
@@ -31,7 +21,7 @@ server {
 
     # Serve frontend files
     location / {
-        try_files \$uri \$uri/ /index.html;
+        try_files $uri $uri/ /index.html;
         add_header Cache-Control "no-cache, no-store, must-revalidate";
         add_header Access-Control-Allow-Origin * always;
         add_header Access-Control-Allow-Methods * always;
@@ -40,18 +30,18 @@ server {
 
     # Proxy API requests to backend
     location /api {
-        proxy_pass http://${BACKEND_HOST};
+        proxy_pass http://BACKEND_HOST_PLACEHOLDER;
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
 
         add_header 'Access-Control-Allow-Origin' '*';
         add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
         add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, Accept';
 
-        if (\$request_method = 'OPTIONS') {
+        if ($request_method = 'OPTIONS') {
             add_header 'Access-Control-Max-Age' 1728000;
             add_header 'Content-Type' 'text/plain charset=UTF-8';
             add_header 'Content-Length' 0;
@@ -61,14 +51,14 @@ server {
 
     # Health check endpoint
     location /health {
-        proxy_pass http://${BACKEND_HOST}/health;
+        proxy_pass http://BACKEND_HOST_PLACEHOLDER/health;
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
         add_header 'Access-Control-Allow-Origin' '*';
         add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
         add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, Accept';
-        if (\$request_method = 'OPTIONS') {
+        if ($request_method = 'OPTIONS') {
             add_header 'Access-Control-Max-Age' 1728000;
             add_header 'Content-Type' 'text/plain charset=UTF-8';
             add_header 'Content-Length' 0;
@@ -83,6 +73,9 @@ server {
     }
 }
 EOF
+
+# Replace the placeholder with the actual backend host
+sed -i "s|BACKEND_HOST_PLACEHOLDER|${BACKEND_HOST}|g" /etc/nginx/conf.d/default.conf
 
 # Wait for backend to be ready
 MAX_RETRIES=30
