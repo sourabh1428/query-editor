@@ -24,7 +24,7 @@ services:
     ports:
       - "80:80"
     environment:
-      - BACKEND_URL=backend:5000
+      - BACKEND_URL=${BACKEND_URL:-backend:5000}
     depends_on:
       - backend
     networks:
