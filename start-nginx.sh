@@ -16,8 +16,73 @@ case "$BACKEND_HOST" in
   *) BACKEND_HOST="${BACKEND_HOST}:5000" ;;
 esac
 
-# Set the backend_host environment variable for Nginx
-export backend_host="$BACKEND_HOST"
+# Create a temporary nginx config with the backend host
+cat > /etc/nginx/conf.d/default.conf << EOF
+# Use Docker's DNS resolver
+resolver 127.0.0.11 valid=30s;
+resolver_timeout 10s;
+
+server {
+    listen 80;
+    server_name localhost;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Serve frontend files
+    location / {
+        try_files \$uri \$uri/ /index.html;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Access-Control-Allow-Origin * always;
+        add_header Access-Control-Allow-Methods * always;
+        add_header Access-Control-Allow-Headers * always;
+    }
+
+    # Proxy API requests to backend
+    location /api {
+        proxy_pass http://${BACKEND_HOST};
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+
+        add_header 'Access-Control-Allow-Origin' '*';
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
+        add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, Accept';
+
+        if (\$request_method = 'OPTIONS') {
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+    }
+
+    # Health check endpoint
+    location /health {
+        proxy_pass http://${BACKEND_HOST}/health;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+        add_header 'Access-Control-Allow-Origin' '*';
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
+        add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, Accept';
+        if (\$request_method = 'OPTIONS') {
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+    }
+
+    # Error page
+    location = /50x.html {
+        root /usr/share/nginx/html;
+        internal;
+    }
+}
+EOF
 
 # Wait for backend to be ready
 MAX_RETRIES=30
