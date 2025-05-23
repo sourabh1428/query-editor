@@ -36,7 +36,7 @@ export function cn(...inputs: ClassValue[]) { \
 fi
 
 # Set environment variables for frontend build
-ENV VITE_API_URL=https://sql-analytics-platform.onrender.com/api
+ENV VITE_API_URL=https://sql-analytics-platform-api.onrender.com/api
 
 # Build the application
 RUN npm run build
@@ -89,14 +89,26 @@ EXPOSE 5000
 
 CMD ["/app/start.sh"]
 
-# Production stage
+# Production stage - frontend only
 FROM nginx:alpine
 
 # Copy the built frontend files
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy simplified nginx configuration
+RUN echo 'server { \
+    listen 80; \
+    server_name localhost; \
+    root /usr/share/nginx/html; \
+    index index.html; \
+    location / { \
+        try_files $uri $uri/ /index.html; \
+    } \
+    location /health { \
+        return 200 "healthy\n"; \
+        add_header Content-Type text/plain; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
 
 # Expose port 80
 EXPOSE 80
