@@ -13,10 +13,19 @@ fi
 
 # Wait for backend to be ready
 echo "Waiting for backend to be ready..."
-while ! wget -q --spider http://backend:5000/; do
-    echo "Backend not ready yet... waiting"
-    sleep 2
-done
+if [ -n "$BACKEND_URL" ]; then
+    # In production, use the BACKEND_URL for health check
+    while ! wget -q --spider "$BACKEND_URL/"; do
+        echo "Backend not ready yet... waiting"
+        sleep 2
+    done
+else
+    # In local development, use backend:5000
+    while ! wget -q --spider http://backend:5000/; do
+        echo "Backend not ready yet... waiting"
+        sleep 2
+    done
+fi
 echo "Backend is ready!"
 
 # Start Nginx
