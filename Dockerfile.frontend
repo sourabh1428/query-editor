@@ -31,16 +31,13 @@ RUN if [ ! -f src/lib/utils.ts ]; then \
 fi
 
 # Set environment variables for frontend build
-ENV VITE_API_URL=http://localhost/api
+ENV VITE_API_URL=https://sql-analytics-platform-api.onrender.com/api
 
 # Build the application
 RUN npm run build
 
 # Production stage
 FROM nginx:alpine
-
-# Install wget for health check
-RUN apk add --no-cache wget
 
 # Copy the built frontend files
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
