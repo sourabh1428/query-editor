@@ -1,12 +1,7 @@
 #!/bin/sh
 set -e
 
-# Hardcoded backend URL
-BACKEND_HOST="sql-analytics-platform.onrender.com:5000"
-
-echo "Using backend host: ${BACKEND_HOST}"
-
-# Create nginx config
+# Create nginx config with hardcoded backend URL
 cat > /etc/nginx/conf.d/default.conf << 'EOF'
 # Use Docker's DNS resolver
 resolver 127.0.0.11 valid=30s;
@@ -30,7 +25,7 @@ server {
 
     # Proxy API requests to backend
     location /api {
-        proxy_pass http://BACKEND_HOST_PLACEHOLDER;
+        proxy_pass http://sql-analytics-platform.onrender.com:5000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -51,7 +46,7 @@ server {
 
     # Health check endpoint
     location /health {
-        proxy_pass http://BACKEND_HOST_PLACEHOLDER/health;
+        proxy_pass http://sql-analytics-platform.onrender.com:5000/health;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
@@ -74,14 +69,11 @@ server {
 }
 EOF
 
-# Replace the placeholder with the actual backend host
-sed -i "s|BACKEND_HOST_PLACEHOLDER|${BACKEND_HOST}|g" /etc/nginx/conf.d/default.conf
-
 # Wait for backend to be ready
 MAX_RETRIES=30
 RETRY_COUNT=0
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-  if wget -q --spider "http://${BACKEND_HOST}/health"; then
+  if wget -q --spider "http://sql-analytics-platform.onrender.com:5000/health"; then
     echo "Backend is ready!"
     break
   fi
