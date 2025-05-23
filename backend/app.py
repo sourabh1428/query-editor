@@ -17,7 +17,8 @@ app = Flask(__name__)
 # Configure CORS for both development and production
 allowed_origins = [
     'http://localhost:5173', 
-    'http://localhost:3000', 
+    'http://localhost:3000',
+    'http://localhost',        # Docker frontend on port 80
     'http://127.0.0.1:5173',
     'https://sql-analytics-platform.onrender.com'  # Production frontend URL
 ]

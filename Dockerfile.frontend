@@ -30,8 +30,9 @@ RUN if [ ! -f src/lib/utils.ts ]; then \
     echo "export function cn(...classes: string[]) { return classes.filter(Boolean).join(' '); }" > src/lib/utils.ts; \
 fi
 
-# Set environment variables for frontend build
-ENV VITE_API_URL=https://sql-analytics-platform-api.onrender.com/api
+# Build argument for API URL (can be overridden during build)
+ARG VITE_API_URL=http://localhost:5000/api
+ENV VITE_API_URL=${VITE_API_URL}
 
 # Build the application
 RUN npm run build
