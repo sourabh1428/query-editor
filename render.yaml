@@ -8,14 +8,12 @@ services:
     plan: free
     envVars:
       - key: VITE_API_URL
-        value: https://sql-analytics-platform-api.onrender.com/api
+        value: https://sql-analytics-platform-api.onrender.com
       - key: NODE_ENV
         value: production
     dockerContext: .
-    dockerCommand: ""
     healthCheckPath: /health
     autoDeploy: true
-    branch: main
     buildFilter:
       paths:
         - src/**
@@ -45,14 +43,17 @@ services:
   - type: web
     name: sql-analytics-platform-api
     env: docker
-    dockerfilePath: ./backend/Dockerfile
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./backend
     region: oregon
     plan: free
     envVars:
       - key: JWT_SECRET
         generateValue: true
       - key: DATABASE_URL
-        value: postgresql://ijp_user:JbufturibQwmucF0vl62pbzkBW6l1a9f@dpg-d0nimqmuk2gs73c1c6rg-a/ijp
+        fromDatabase:
+          name: sql-analytics-db
+          property: connectionString
       - key: FLASK_APP
         value: app.py
       - key: FLASK_ENV
@@ -63,7 +64,6 @@ services:
         value: https://sql-analytics-platform.onrender.com
     healthCheckPath: /api/health
     autoDeploy: true
-    branch: main
     buildFilter:
       paths:
         - backend/**

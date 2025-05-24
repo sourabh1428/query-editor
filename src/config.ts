@@ -9,16 +9,13 @@ const isDevelopment = import.meta.env.MODE === 'development' ||
 
 // Set API URL based on environment
 const getApiUrl = () => {
-  // FIRST: Check if we're clearly in development - this takes priority
+  // FIRST: Always check for explicit environment variable
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL + '/api';
+  }
+  
+  // SECOND: Check if we're clearly in development
   if (isDevelopment) {
-    // In development, always use local backend unless explicitly overridden
-    const devApiUrl = import.meta.env.VITE_API_URL;
-    
-    // Only use the env var if it points to localhost/127.0.0.1
-    if (devApiUrl && (devApiUrl.includes('localhost') || devApiUrl.includes('127.0.0.1'))) {
-      return devApiUrl;
-    }
-    
     // Special case for Docker: if hostname is localhost but no specific API URL
     if (window.location.hostname === 'localhost') {
       return 'http://localhost:5000/api';
@@ -28,12 +25,7 @@ const getApiUrl = () => {
     return 'http://localhost:5000/api';
   }
   
-  // SECOND: For production, use environment variable if available
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  
-  // THIRD: Production domain detection
+  // THIRD: Production domain detection fallback
   if (window.location.hostname.includes('sql-analytics-platform.onrender.com')) {
     return 'https://sql-analytics-platform-api.onrender.com/api';
   }
