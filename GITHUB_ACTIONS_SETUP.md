@@ -250,7 +250,7 @@ Add database migration steps:
 ```yaml
 - name: Run Database Migrations
   run: |
-    ssh ec2-user@${{ secrets.EC2_HOST }} '
+    ssh ec2-ubuntu@${{ secrets.EC2_HOST }} '
       cd query-editor
       docker-compose exec backend python manage.py migrate
     '
