@@ -44,7 +44,6 @@ jobs:
       run: |
         cd backend
         pip install -r requirements.txt
-        # Add backend tests here when available
         python -c "import app; print('Backend imports successfully')"
 
   # Deploy Job (only on main branch)
@@ -72,7 +71,7 @@ jobs:
         chmod 644 ~/.ssh/known_hosts
         
         # Create SSH config
-        cat > ~/.ssh/config << EOL
+        cat > ~/.ssh/config << 'EOL'
 Host ec2
     HostName ec2-15-206-178-18.ap-south-1.compute.amazonaws.com
     User ubuntu
@@ -271,7 +270,7 @@ EOL
         sleep 30
         
         # Check backend health
-        if curl -f http://${{ secrets.EC2_HOST }}:5000/api/health; then
+        if curl -f http://ec2-15-206-178-18.ap-south-1.compute.amazonaws.com:5000/api/health; then
           echo "✅ Backend health check passed"
         else
           echo "❌ Backend health check failed"
@@ -279,7 +278,7 @@ EOL
         fi
         
         # Check frontend health
-        if curl -f http://${{ secrets.EC2_HOST }}:3000/health; then
+        if curl -f http://ec2-15-206-178-18.ap-south-1.compute.amazonaws.com:3000/health; then
           echo "✅ Frontend health check passed"
         else
           echo "⚠️ Frontend health check failed (this might be normal)"
@@ -308,9 +307,9 @@ EOL
         if [ "${{ needs.deploy.result }}" == "success" ]; then
           echo "✅ Deployment to AWS EC2 completed successfully!"
           echo "🌐 Your application is live at:"
-          echo "   Frontend: http://${{ secrets.EC2_HOST }}:3000"
-          echo "   Backend API: http://${{ secrets.EC2_HOST }}:5000"
-          echo "   API Docs: http://${{ secrets.EC2_HOST }}:5000/api-docs/"
+          echo "   Frontend: http://ec2-15-206-178-18.ap-south-1.compute.amazonaws.com:3000"
+          echo "   Backend API: http://ec2-15-206-178-18.ap-south-1.compute.amazonaws.com:5000"
+          echo "   API Docs: http://ec2-15-206-178-18.ap-south-1.compute.amazonaws.com:5000/api-docs/"
         else
           echo "❌ Deployment failed. Check the logs above for details."
           exit 1
