@@ -62,11 +62,16 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2.pem
         chmod 600 ~/.ssh/ec2.pem
+        
+        # Add EC2 host to known_hosts
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+        
+        # Create SSH config
         echo "Host ec2
           HostName ${{ secrets.EC2_HOST }}
           User ec2-user
           IdentityFile ~/.ssh/ec2.pem
-          StrictHostKeyChecking no" > ~/.ssh/config
+          StrictHostKeyChecking accept-new" > ~/.ssh/config
 
     - name: Create deployment script
       run: |
@@ -239,10 +244,10 @@ jobs:
         echo "🚀 Deploying to EC2: ${{ secrets.EC2_HOST }}"
         
         # Copy deployment script to EC2
-        scp -i ~/.ssh/ec2.pem deploy-remote.sh ec2-user@${{ secrets.EC2_HOST }}:~/
+        scp -o "StrictHostKeyChecking=accept-new" deploy-remote.sh ec2-user@${{ secrets.EC2_HOST }}:~/
         
         # Execute deployment on EC2
-        ssh -i ~/.ssh/ec2.pem ec2-user@${{ secrets.EC2_HOST }} 'bash ~/deploy-remote.sh'
+        ssh -o "StrictHostKeyChecking=accept-new" ec2-user@${{ secrets.EC2_HOST }} 'bash ~/deploy-remote.sh'
 
     - name: Health Check
       run: |
