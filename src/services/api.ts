@@ -131,14 +131,14 @@ class ApiService {
 
   // Auth endpoints
   async login(email: string, password: string) {
-    return this.makeRequest('/auth/login', {
+    return this.makeRequest('/api/auth/login', {
       method: 'POST',
       body: { email, password }
     });
   }
 
   async register(username: string, email: string, password: string) {
-    return this.makeRequest('/auth/register', {
+    return this.makeRequest('/api/auth/register', {
       method: 'POST',
       body: { username, email, password }
     });
@@ -146,35 +146,35 @@ class ApiService {
 
   // Query endpoints
   async executeQuery(query: string) {
-    return this.makeRequest('/queries/execute', {
+    return this.makeRequest('/api/queries/execute', {
       method: 'POST',
       body: { query }
     });
   }
 
   async getQueryHistory() {
-    return this.makeRequest('/queries/history');
+    return this.makeRequest('/api/queries/history');
   }
 
   async deleteQuery(queryId: number) {
-    return this.makeRequest(`/queries/${queryId}`, {
+    return this.makeRequest(`/api/queries/${queryId}`, {
       method: 'DELETE'
     });
   }
 
   async downloadQueryResults(queryId: number) {
-    return this.makeRequest(`/queries/${queryId}/download`, {
+    return this.makeRequest(`/api/queries/${queryId}/download`, {
       responseType: 'blob'
     });
   }
 
   // Schema endpoints
   async getTables() {
-    return this.makeRequest('/schema/tables');
+    return this.makeRequest('/api/schema/tables');
   }
 
   async getTableSchema(tableName: string) {
-    return this.makeRequest(`/schema/tables/${tableName}`);
+    return this.makeRequest(`/api/schema/tables/${tableName}`);
   }
 }
 
