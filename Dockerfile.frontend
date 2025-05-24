@@ -24,13 +24,18 @@ RUN mkdir -p public
 # Copy source code
 COPY src/ src/
 
-# Create utils.ts if it doesn't exist
+# Verify the utils file exists and create it if it doesn't
 RUN if [ ! -f src/lib/utils.ts ]; then \
     mkdir -p src/lib && \
-    echo "export function cn(...classes: string[]) { return classes.filter(Boolean).join(' '); }" > src/lib/utils.ts; \
+    echo 'import { type ClassValue, clsx } from "clsx"; \
+import { twMerge } from "tailwind-merge"; \
+\
+export function cn(...inputs: ClassValue[]) { \
+  return twMerge(clsx(inputs)); \
+}' > src/lib/utils.ts; \
 fi
 
-# Build argument for API URL (can be overridden during build)
+# Build arguments for environment variables (fixed to not include /api)
 ARG VITE_API_URL=http://localhost:5000
 ENV VITE_API_URL=${VITE_API_URL}
 
@@ -45,6 +50,9 @@ COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80
+EXPOSE 80
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"] 

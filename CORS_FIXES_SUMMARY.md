@@ -40,16 +40,7 @@ return import.meta.env.VITE_API_URL + '/api';
 return import.meta.env.VITE_API_URL;
 ```
 
-### 2. API Service URLs (`src/services/api.ts`)
-```typescript
-// BEFORE: Missing /api prefix
-'/auth/login'
-'/queries/execute'
-
-// AFTER: Correct full paths
-'/api/auth/login'
-'/api/queries/execute'
-```
+### 2. API Service URLs (`src/services/api.ts`)```typescript// BEFORE: Missing /api prefix'/auth/login''/queries/execute'// AFTER: Correct full paths'/api/auth/login''/api/queries/execute'```### 3. Environment Variables Fixed```bash# BEFORE: VITE_API_URL included /api causing double pathsVITE_API_URL=http://localhost:5000/api# AFTER: VITE_API_URL is base URL onlyVITE_API_URL=http://localhost:5000```
 
 ### 3. Backend CORS Configuration (`backend/app.py`)
 ```python

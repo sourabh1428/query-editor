@@ -48,7 +48,7 @@ The PostgreSQL database is automatically created via `render.yaml`:
 ### Environment Variables:
 ```yaml
 # Frontend
-VITE_API_URL=https://sql-analytics-platform-api.onrender.com/api
+VITE_API_URL=https://sql-analytics-platform-api.onrender.com
 
 # Backend
 FRONTEND_URL=https://sql-analytics-platform.onrender.com
@@ -85,9 +85,7 @@ Configure the environment variables as specified in `render.yaml`
 
 ## Development vs Production
 
-The application automatically detects the environment:
-- **Development**: Uses `http://localhost:5000/api`
-- **Production**: Uses `https://sql-analytics-platform-api.onrender.com/api`
+The application automatically detects the environment:- **Development**: Uses `http://localhost:5000` → constructs `http://localhost:5000/api/*`- **Production**: Uses `https://sql-analytics-platform-api.onrender.com` → constructs `https://sql-analytics-platform-api.onrender.com/api/*`
 
 ## Troubleshooting
 
