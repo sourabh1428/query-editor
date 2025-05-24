@@ -71,13 +71,11 @@ jobs:
         chmod 644 ~/.ssh/known_hosts
         
         # Create SSH config
-        cat > ~/.ssh/config << 'EOL'
-Host ec2
-    HostName ec2-15-206-178-18.ap-south-1.compute.amazonaws.com
-    User ubuntu
-    IdentityFile ~/.ssh/ec2.pem
-    StrictHostKeyChecking accept-new
-EOL
+        echo "Host ec2" > ~/.ssh/config
+        echo "    HostName ec2-15-206-178-18.ap-south-1.compute.amazonaws.com" >> ~/.ssh/config
+        echo "    User ubuntu" >> ~/.ssh/config
+        echo "    IdentityFile ~/.ssh/ec2.pem" >> ~/.ssh/config
+        echo "    StrictHostKeyChecking accept-new" >> ~/.ssh/config
         chmod 600 ~/.ssh/config
         
         # Debug: Test SSH connection
