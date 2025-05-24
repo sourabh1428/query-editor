@@ -1,12 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
-echo "Starting Redis..."
-redis-server /etc/redis.conf --daemonize yes
-sleep 2
-redis-cli ping || echo "Redis failed to start"
+# Wait for database to be ready
+echo "Waiting for database..."
+while ! nc -z db 5432; do
+  sleep 1
+done
+echo "Database is ready!"
 
-echo "Starting backend..."
-cd /app/backend && . /opt/venv/bin/activate && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 app:app &
-
-echo "Starting frontend..."
-cd /app && npm run start 
+# Start the application
+python app.py 
