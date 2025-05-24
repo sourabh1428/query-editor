@@ -11,8 +11,9 @@ const isDevelopment = import.meta.env.MODE === 'development' ||
 const getApiUrl = () => {
   // FIRST: Always check for explicit environment variable
   if (import.meta.env.VITE_API_URL) {
-    // Don't add /api suffix since the environment variable should be the base URL
-    return import.meta.env.VITE_API_URL;
+    const baseUrl = import.meta.env.VITE_API_URL;
+    // Remove trailing slash if present
+    return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
   }
   
   // SECOND: Check if we're clearly in development

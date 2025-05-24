@@ -17,11 +17,17 @@ app = Flask(__name__)
 # Simple and effective CORS configuration
 CORS(app, 
      resources={
-         r"/api/*": {
-             "origins": ["*"],
+         r"/*": {  # Changed from r"/api/*" to r"/*" to handle all routes
+             "origins": [
+                 "https://sql-analytics-platform.onrender.com",
+                 "http://localhost:80",
+                 "http://localhost:5173",
+                 "http://localhost:3000"
+             ],
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
              "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
-             "supports_credentials": True
+             "supports_credentials": True,
+             "expose_headers": ["Content-Type", "Authorization"]
          }
      })
 
