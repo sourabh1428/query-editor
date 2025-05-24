@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      // Note: We'll need to add a /users/me endpoint or handle auth validation differently
+      // Note: We'll need to add a /users/me endpoint or handle auth validation differentlysssss
       setLoading(false);
     } else {
       setLoading(false);
