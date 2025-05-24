@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Moon, Sun, LayoutDashboard, History, Database, Settings, LogOut, Download, Trash2, Clock, Play, Copy, Loader2 } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, History, Database, Settings, LogOut, Download, Trash2, Clock, Play, Copy, Loader2, ChevronRight, Zap, Activity } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Card, CardContent } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Badge } from '../components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import QueryEditor from '../components/QueryEditor';
 import { useTheme } from '../components/theme-provider';
 import { useToast } from '../components/ui/use-toast';
 import QueryResults from '../components/QueryResults';
 import SchemaExplorer from '../components/SchemaExplorer';
+import SettingsPage from './Settings';
 import { apiService } from '../services/api';
 
 interface QueryResult {
@@ -200,285 +203,378 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
   return (
-    <div className="flex min-h-screen bg-background text-foreground overflow-x-hidden">
-      {/* Sidebar */}
-      <aside className="fixed top-0 left-0 h-screen w-64 bg-card border-r flex flex-col overflow-y-auto">
-        <div className="p-6 border-b">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">
-            SQL Explorer
-          </h1>
+    <div className="flex min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+      {/* Enhanced Sidebar */}
+      <aside className="fixed top-0 left-0 h-screen w-72 bg-card/95 backdrop-blur-sm border-r border-border/50 flex flex-col overflow-y-auto shadow-xl">
+        {/* Header */}
+        <div className="p-6 border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+              <Zap className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                SQL Analytics
+              </h1>
+              <p className="text-xs text-muted-foreground">Professional Edition</p>
+            </div>
+          </div>
         </div>
-        <nav className="flex-1 px-4 py-4 space-y-1">
+
+        {/* User Profile */}
+        <div className="p-4 border-b border-border/50">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+            <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+              <AvatarImage src="" />
+              <AvatarFallback className="bg-primary text-primary-foreground font-medium">
+                {getInitials(user?.username || 'User')}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm truncate">{user?.username}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            </div>
+            <Badge variant="success" className="text-xs">Pro</Badge>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-4 py-4 space-y-2">
           {navLinks.map((link) => {
             const Icon = link.icon;
+            const isActive = activeTab === link.tab;
             return (
-            <button
+              <button
                 key={link.label}
                 onClick={() => handleTabClick(link.tab)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors w-full ${
-                  activeTab === link.tab ? 'bg-accent' : ''
+                className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 w-full ${
+                  isActive 
+                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' 
+                    : 'hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                <span className="truncate">{link.label}</span>
-            </button>
+                <Icon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`} />
+                <span className="font-medium">{link.label}</span>
+                <ChevronRight className={`w-4 h-4 ml-auto transition-transform duration-200 ${isActive ? 'rotate-90' : ''}`} />
+              </button>
             );
           })}
         </nav>
-        <div className="p-4 space-y-2 border-t bg-muted/50">
+
+        {/* Footer Actions */}
+        <div className="p-4 space-y-2 border-t border-border/50 bg-muted/30">
           <Button
             variant="ghost"
-            className="w-full flex items-center gap-2 justify-start"
+            className="w-full flex items-center gap-3 justify-start text-sm"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           >
-            {theme === 'dark' ? <Sun className="w-5 h-5 flex-shrink-0" /> : <Moon className="w-5 h-5 flex-shrink-0" />}
-            <span className="truncate">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
           </Button>
           <Button
             variant="ghost"
-            className="w-full flex items-center gap-2 justify-start text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+            className="w-full flex items-center gap-3 justify-start text-sm text-destructive hover:text-destructive/90 hover:bg-destructive/10"
             onClick={logout}
-            >
-            <LogOut className="w-5 h-5 flex-shrink-0" />
-            <span className="truncate">Sign Out</span>
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out</span>
           </Button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-64 p-8 overflow-x-hidden">
-        <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">{navLinks.find(link => link.tab === activeTab)?.label || 'Dashboard'}</h1>
-            <p className="text-muted-foreground">Welcome back, {user?.username}</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  <span className="text-sm">Connected</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </header>
-
-        {/* Main Content Area */}
-        <div className="space-y-6">
-          {activeTab === 'editor' && (
-            <Card>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">Query Editor</h2>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          navigator.clipboard.writeText(query);
-                          toast({
-                            title: "Copied!",
-                            description: "Query copied to clipboard",
-                          });
-                        }}
-                        className="flex items-center gap-2"
-                      >
-                        <Copy className="w-4 h-4" />
-                        Copy
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setQuery('');
-                          toast({
-                            title: "Cleared!",
-                            description: "Query editor cleared",
-                          });
-                        }}
-                        className="flex items-center gap-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Clear
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="w-full">
-                    <TabsList className="mb-4">
-                      <TabsTrigger value="editor">Editor</TabsTrigger>
-                      <TabsTrigger value="results">Results</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="editor" className="space-y-4">
-                      <div className="relative">
-                        <QueryEditor
-                          query={query}
-                          setQuery={setQuery}
-                          executeQuery={executeQuery}
-                          loading={loading}
-                          theme={theme === 'dark' ? 'vs-dark' : 'light'}
-                        />
-                        <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={executeQuery}
-                            disabled={loading || !query.trim()}
-                            className="flex items-center gap-2"
-                          >
-                            {loading ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Play className="w-4 h-4" />
-                            )}
-                            {loading ? 'Running...' : 'Run Query'}
-                          </Button>
-                        </div>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="results">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-medium text-muted-foreground">
-                            {results.length > 0 
-                              ? `${results.length} row${results.length === 1 ? '' : 's'} returned`
-                              : 'No results to display'}
-                          </h3>
-                          {results.length > 0 && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const csv = results.map(row => 
-                                  Object.values(row).join(',')
-                                ).join('\n');
-                                navigator.clipboard.writeText(csv);
-                                toast({
-                                  title: "Copied!",
-                                  description: "Results copied to clipboard",
-                                });
-                              }}
-                              className="flex items-center gap-2"
-                            >
-                              <Copy className="w-4 h-4" />
-                              Copy Results
-                            </Button>
-                          )}
-                        </div>
-                        <div className="rounded-md border">
-                          <QueryResults results={results} loading={loading} />
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-
-                  {loading && (
-                    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-                      <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                        <p className="text-lg font-medium">Executing query...</p>
-                      </div>
-                    </div>
+      <main className="flex-1 ml-72 overflow-hidden">
+        <div className="h-screen flex flex-col">
+          {/* Enhanced Header */}
+          <header className="bg-card/95 backdrop-blur-sm border-b border-border/50 px-8 py-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
+                    {navLinks.find(link => link.tab === activeTab)?.label || 'Dashboard'}
+                  </h1>
+                  {activeTab === 'editor' && (
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <Activity className="w-3 h-3" />
+                      Live
+                    </Badge>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <p className="text-muted-foreground mt-1">
+                  Welcome back, <span className="font-medium">{user?.username}</span>
+                </p>
+              </div>
+              <div className="flex items-center gap-4">
+                <Card className="px-4 py-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <span className="text-sm font-medium">Connected</span>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </header>
 
-          {activeTab === 'history' && (
-            <Card>
-              <CardContent className="p-6">
-                {historyLoading ? (
-                  <div className="flex items-center justify-center h-32">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
-                ) : history.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No query history found
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {history.map((item: QueryHistoryItem) => (
-                      <Card key={item.id} className="bg-card">
-                        <CardContent className="p-4">
-                          <div className="flex flex-wrap items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                  <Clock className="w-4 h-4 flex-shrink-0" />
-                                  {formatDate(item.created_at)}
-                                </div>
-                              </div>
-                              <pre className="text-sm bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-words">
-                                {item.query_text}
-                              </pre>
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                  setQuery(item.query_text);
-                                  setActiveTab('editor');
-                                }}
-                                className="text-muted-foreground hover:text-primary"
-                              >
+          {/* Content Area */}
+          <div className="flex-1 p-8 overflow-auto">
+            {activeTab === 'editor' && (
+              <div className="space-y-6">
+                <Card className="relative overflow-hidden shadow-lg border-0 bg-gradient-to-br from-card to-card/50">
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5" />
+                  <CardHeader className="relative border-b border-border/50">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-xl">
+                        <LayoutDashboard className="w-5 h-5" />
+                        SQL Query Editor
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(query);
+                            toast({
+                              title: "Copied!",
+                              description: "Query copied to clipboard",
+                            });
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          <Copy className="w-4 h-4" />
+                          Copy
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setQuery('');
+                            toast({
+                              title: "Cleared!",
+                              description: "Query editor cleared",
+                            });
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="relative p-6">
+                    <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="w-full">
+                      <TabsList className="mb-6 bg-muted/50">
+                        <TabsTrigger value="editor" className="flex items-center gap-2">
+                          <LayoutDashboard className="w-4 h-4" />
+                          Editor
+                        </TabsTrigger>
+                        <TabsTrigger value="results" className="flex items-center gap-2">
+                          <Activity className="w-4 h-4" />
+                          Results
+                          {results.length > 0 && (
+                            <Badge variant="secondary" className="ml-1 text-xs">
+                              {results.length}
+                            </Badge>
+                          )}
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="editor" className="space-y-4">
+                        <div className="relative rounded-lg overflow-hidden border border-border/50">
+                          <QueryEditor
+                            query={query}
+                            setQuery={setQuery}
+                            executeQuery={executeQuery}
+                            loading={loading}
+                            theme={theme === 'dark' ? 'vs-dark' : 'light'}
+                          />
+                          <div className="absolute bottom-4 right-4 flex items-center gap-2">
+                            <Button
+                              onClick={executeQuery}
+                              disabled={loading || !query.trim()}
+                              className="flex items-center gap-2 shadow-lg"
+                            >
+                              {loading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
                                 <Play className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => downloadResults(item.id)}
-                                className="text-muted-foreground"
-                              >
-                                <Download className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => deleteQuery(item.id)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
+                              )}
+                              {loading ? 'Running...' : 'Execute Query'}
+                            </Button>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                        </div>
+                      </TabsContent>
 
-          {activeTab === 'schema' && (
-            <Card>
-              <CardContent className="p-6">
-                <SchemaExplorer
-                  tables={tables}
-                  selectedTable={selectedTable}
-                  tableSchema={tableSchema}
-                  loading={schemaLoading}
-                  onSelectTable={fetchTableSchema}
-                />
-              </CardContent>
-            </Card>
-          )}
+                      <TabsContent value="results">
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <h3 className="text-sm font-medium text-muted-foreground">
+                                {results.length > 0 
+                                  ? `${results.length} row${results.length === 1 ? '' : 's'} returned`
+                                  : 'No results to display'}
+                              </h3>
+                              {results.length > 0 && (
+                                <Badge variant="outline">
+                                  {new Date().toLocaleTimeString()}
+                                </Badge>
+                              )}
+                            </div>
+                            {results.length > 0 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const csv = results.map(row => 
+                                    Object.values(row).join(',')
+                                  ).join('\n');
+                                  navigator.clipboard.writeText(csv);
+                                  toast({
+                                    title: "Copied!",
+                                    description: "Results copied to clipboard",
+                                  });
+                                }}
+                                className="flex items-center gap-2"
+                              >
+                                <Copy className="w-4 h-4" />
+                                Copy Results
+                              </Button>
+                            )}
+                          </div>
+                          <div className="rounded-lg border border-border/50 overflow-hidden">
+                            <QueryResults results={results} loading={loading} />
+                          </div>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
-          {activeTab === 'settings' && (
-            <Card>
-              <CardContent className="p-6">
-                <Settings />
-              </CardContent>
-            </Card>
-          )}
+            {activeTab === 'history' && (
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-card to-card/50">
+                <CardHeader className="border-b border-border/50">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <History className="w-5 h-5" />
+                    Query History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {historyLoading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : history.length === 0 ? (
+                    <div className="text-center py-12">
+                      <History className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">No query history found</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {history.map((item: QueryHistoryItem) => (
+                        <Card key={item.id} className="bg-muted/30 border-border/50 hover:bg-muted/50 transition-colors">
+                          <CardContent className="p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                    <Clock className="w-4 h-4 flex-shrink-0" />
+                                    {formatDate(item.created_at)}
+                                  </div>
+                                  <Badge variant="outline" className="text-xs">
+                                    Query #{item.id}
+                                  </Badge>
+                                </div>
+                                <pre className="text-sm bg-background/50 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-words border border-border/30">
+                                  {item.query_text}
+                                </pre>
+                              </div>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setQuery(item.query_text);
+                                    setActiveTab('editor');
+                                  }}
+                                  className="text-muted-foreground hover:text-primary"
+                                >
+                                  <Play className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => downloadResults(item.id)}
+                                  className="text-muted-foreground hover:text-primary"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteQuery(item.id)}
+                                  className="text-destructive hover:text-destructive/90"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'schema' && (
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-card to-card/50">
+                <CardHeader className="border-b border-border/50">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Database className="w-5 h-5" />
+                    Database Schema
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <SchemaExplorer
+                    tables={tables}
+                    selectedTable={selectedTable}
+                    tableSchema={tableSchema}
+                    loading={schemaLoading}
+                    onSelectTable={fetchTableSchema}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'settings' && (
+              <div className="-m-8">
+                <SettingsPage />
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Loading Overlay */}
+        {loading && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <Card className="p-6">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <p className="text-lg font-medium">Executing query...</p>
+                <p className="text-sm text-muted-foreground">Please wait while we process your request</p>
+              </div>
+            </Card>
+          </div>
+        )}
       </main>
     </div>
   );

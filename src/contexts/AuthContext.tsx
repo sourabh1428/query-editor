@@ -13,6 +13,7 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   loading: boolean;
+  authLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -36,6 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,6 +51,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
+    if (authLoading) {
+      console.log('Login already in progress, ignoring duplicate call');
+      return;
+    }
+
+    setAuthLoading(true);
     try {
       const data = await apiService.login(email, password);
       
@@ -69,10 +77,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setAuthLoading(false);
     }
   };
 
   const register = async (username: string, email: string, password: string) => {
+    if (authLoading) {
+      console.log('Registration already in progress, ignoring duplicate call');
+      return;
+    }
+
+    setAuthLoading(true);
     try {
       const data = await apiService.register(username, email, password);
       
@@ -93,6 +109,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -113,6 +131,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     token,
     isAuthenticated: !!token,
     loading,
+    authLoading,
     login,
     register,
     logout
