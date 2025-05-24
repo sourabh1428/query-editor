@@ -101,9 +101,9 @@ jobs:
         print_error() { echo -e "${RED}❌ $1${NC}"; }
 
         # Navigate to application directory
-        cd /home/ec2-user/query-editor || {
+        cd /home/ubuntu/query-editor || {
             print_error "Application directory not found. Running initial setup..."
-            cd /home/ec2-user
+            cd /home/ubuntu
             git clone https://github.com/sourabh1428/query-editor.git
             cd query-editor
         }
