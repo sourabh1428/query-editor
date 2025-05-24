@@ -15,12 +15,31 @@ print_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
 print_error() { echo -e "${RED}❌ $1${NC}"; }
 
 # Navigate to application directory
-cd /home/ec2-user/query-editor || {
+cd /home/ubuntu/query-editor || {
     print_error "Application directory not found. Running initial setup..."
-    cd /home/ec2-user
+    cd /home/ubuntu
     git clone https://github.com/sourabh1428/query-editor.git
     cd query-editor
 }
+
+# Install Docker if not installed
+if ! command -v docker &> /dev/null; then
+    print_status "Installing Docker..."
+    sudo apt-get update
+    sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+    sudo apt-get update
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+    sudo usermod -aG docker ubuntu
+fi
+
+# Install Docker Compose if not installed
+if ! command -v docker-compose &> /dev/null; then
+    print_status "Installing Docker Compose..."
+    sudo curl -L "https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+fi
 
 # Pull latest changes
 print_status "Pulling latest changes from GitHub..."

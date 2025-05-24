@@ -59,19 +59,30 @@ jobs:
 
     - name: Configure SSH
       run: |
+        # Create .ssh directory with correct permissions
         mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2.pem
+        chmod 700 ~/.ssh
+        
+        # Save the SSH key with proper formatting
+        echo "${{ secrets.EC2_SSH_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/ec2.pem
         chmod 600 ~/.ssh/ec2.pem
         
         # Add EC2 host to known_hosts
-        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H ec2-15-206-178-18.ap-south-1.compute.amazonaws.com >> ~/.ssh/known_hosts
+        chmod 644 ~/.ssh/known_hosts
         
         # Create SSH config
-        echo "Host ec2
-          HostName ${{ secrets.EC2_HOST }}
-          User ec2-user
-          IdentityFile ~/.ssh/ec2.pem
-          StrictHostKeyChecking accept-new" > ~/.ssh/config
+        cat > ~/.ssh/config << EOL
+Host ec2
+    HostName ec2-15-206-178-18.ap-south-1.compute.amazonaws.com
+    User ubuntu
+    IdentityFile ~/.ssh/ec2.pem
+    StrictHostKeyChecking accept-new
+EOL
+        chmod 600 ~/.ssh/config
+        
+        # Debug: Test SSH connection
+        ssh-keygen -l -f ~/.ssh/ec2.pem || echo "Invalid key format"
 
     - name: Create deployment script
       run: |
@@ -241,13 +252,16 @@ jobs:
 
     - name: Deploy to EC2
       run: |
-        echo "🚀 Deploying to EC2: ${{ secrets.EC2_HOST }}"
+        echo "🚀 Deploying to EC2: ec2-15-206-178-18.ap-south-1.compute.amazonaws.com"
+        
+        # Debug: Test SSH connection
+        ssh -v -i ~/.ssh/ec2.pem ubuntu@ec2-15-206-178-18.ap-south-1.compute.amazonaws.com 'echo "SSH connection successful"' || echo "SSH connection failed"
         
         # Copy deployment script to EC2
-        scp -o "StrictHostKeyChecking=accept-new" deploy-remote.sh ec2-user@${{ secrets.EC2_HOST }}:~/
+        scp -v -i ~/.ssh/ec2.pem deploy-remote.sh ubuntu@ec2-15-206-178-18.ap-south-1.compute.amazonaws.com:~/
         
         # Execute deployment on EC2
-        ssh -o "StrictHostKeyChecking=accept-new" ec2-user@${{ secrets.EC2_HOST }} 'bash ~/deploy-remote.sh'
+        ssh -i ~/.ssh/ec2.pem ubuntu@ec2-15-206-178-18.ap-south-1.compute.amazonaws.com 'bash ~/deploy-remote.sh'
 
     - name: Health Check
       run: |
