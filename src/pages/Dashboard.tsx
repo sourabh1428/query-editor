@@ -221,7 +221,7 @@ const Dashboard: React.FC = () => {
               <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 SQL Analytics
               </h1>
-              <p className="text-xs text-muted-foreground">Professional Edition</p>
+            
             </div>
           </div>
         </div>
@@ -239,7 +239,7 @@ const Dashboard: React.FC = () => {
               <p className="font-medium text-sm truncate">{user?.username}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
-            <Badge variant="success" className="text-xs">Pro</Badge>
+          
           </div>
         </div>
 
