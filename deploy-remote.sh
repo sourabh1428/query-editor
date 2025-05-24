@@ -15,11 +15,18 @@ print_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
 print_error() { echo -e "${RED}❌ $1${NC}"; }
 
 # Navigate to application directory
-cd /home/ubuntu/query-editor || {
+APP_DIR="/home/ubuntu/query-editor"
+cd "$APP_DIR" || {
     print_error "Application directory not found. Running initial setup..."
-    cd /home/ubuntu
+    cd /home/ubuntu || {
+        print_error "Failed to access /home/ubuntu directory"
+        exit 1
+    }
     git clone https://github.com/sourabh1428/query-editor.git
-    cd query-editor
+    cd query-editor || {
+        print_error "Failed to access cloned repository"
+        exit 1
+    }
 }
 
 # Install Docker if not installed
