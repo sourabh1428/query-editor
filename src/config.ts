@@ -11,27 +11,28 @@ const isDevelopment = import.meta.env.MODE === 'development' ||
 const getApiUrl = () => {
   // FIRST: Always check for explicit environment variable
   if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL + '/api';
+    // Don't add /api suffix since the environment variable should be the base URL
+    return import.meta.env.VITE_API_URL;
   }
   
   // SECOND: Check if we're clearly in development
   if (isDevelopment) {
     // Special case for Docker: if hostname is localhost but no specific API URL
     if (window.location.hostname === 'localhost') {
-      return 'http://localhost:5000/api';
+      return 'http://localhost:5000';
     }
     
     // Default to local backend in development
-    return 'http://localhost:5000/api';
+    return 'http://localhost:5000';
   }
   
   // THIRD: Production domain detection fallback
   if (window.location.hostname.includes('sql-analytics-platform.onrender.com')) {
-    return 'https://sql-analytics-platform-api.onrender.com/api';
+    return 'https://sql-analytics-platform-api.onrender.com';
   }
   
   // FALLBACK: Default production API
-  return 'https://sql-analytics-platform-api.onrender.com/api';
+  return 'https://sql-analytics-platform-api.onrender.com';
 };
 
 export const API_URL = getApiUrl();

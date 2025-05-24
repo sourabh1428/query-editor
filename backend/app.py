@@ -14,15 +14,16 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Ultra-permissive CORS for debugging
-CORS(app,
-     origins=True,  # Allow all origins
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
-     allow_headers=["*"],  # Allow all headers
-     supports_credentials=True,
-     send_wildcard=False,
-     max_age=0,  # Disable caching for debugging
-     automatic_options=True)
+# Simple and effective CORS configuration
+CORS(app, 
+     resources={
+         r"/api/*": {
+             "origins": ["*"],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+             "supports_credentials": True
+         }
+     })
 
 # Comprehensive request/response logging
 @app.before_request
@@ -106,19 +107,36 @@ app.register_blueprint(auth_bp, url_prefix="/api/auth")
 app.register_blueprint(queries_bp, url_prefix="/api/queries")
 app.register_blueprint(schema_bp, url_prefix="/api/schema")
 
+# Root health check
 @app.route("/", methods=["GET"])
 def root_health_check():
-    return jsonify({"status": "healthy", "message": "SQL Analytics API is running"})
+    return jsonify({"status": "healthy", "message": "SQL Analytics API is running", "version": "1.0.0"}), 200
 
-@app.route('/health')
+# Main health check endpoint for Render
+@app.route('/health', methods=["GET"])
 def health_check():
-    return jsonify({"status": "healthy"}), 200
-
-@app.route('/api/health')
-def api_health_check():
     return jsonify({"status": "healthy", "message": "API is running"}), 200
+
+# API health check endpoint  
+@app.route('/api/health', methods=["GET"])
+def api_health_check():
+    return jsonify({"status": "healthy", "message": "API is running", "endpoints": ["/api/auth", "/api/queries", "/api/schema"]}), 200
+
+# Debug endpoint to show all routes
+@app.route('/api/routes', methods=["GET"])
+def show_routes():
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({
+            'endpoint': rule.endpoint,
+            'methods': list(rule.methods),
+            'rule': str(rule)
+        })
+    return jsonify({"routes": routes}), 200
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
-    print(f"Starting server on port {port}")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    print(f"🚀 Starting SQL Analytics Platform Backend on port {port}")
+    print(f"📚 API Documentation available at: http://localhost:{port}/api-docs/")
+    print(f"💚 Health check available at: http://localhost:{port}/api/health")
+    app.run(host="0.0.0.0", port=port, debug=False)
