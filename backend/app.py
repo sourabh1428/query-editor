@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from dotenv import load_dotenv
 from flasgger import Swagger
 import os
@@ -15,39 +15,20 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configure CORS to allow all origins
+# Configure CORS with specific settings
 CORS(app, 
-     resources={
-         r"/*": {
-             "origins": "*",
-             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-             "allow_headers": "*",
-             "expose_headers": "*",
-             "supports_credentials": False,
-             "max_age": 3600
-         }
-     })
-
-# Add CORS headers to all responses
-@app.after_request
-def after_request(response):
-    # Get the origin from the request
-    origin = request.headers.get('Origin')
-    
-    # Always set the Access-Control-Allow-Origin header to match the request origin
-    if origin:
-        response.headers['Access-Control-Allow-Origin'] = origin
-    else:
-        response.headers['Access-Control-Allow-Origin'] = '*'
-    
-    # Set other CORS headers
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Referer, User-Agent'
-    response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization'
-    response.headers['Access-Control-Max-Age'] = '3600'
-    response.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
-    
-    return response
+     resources={r"/api/*": {
+         "origins": [
+             "http://localhost:3000",
+             "http://localhost:5173",
+             "http://15.207.114.204:3000"
+         ],
+         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin", "Referer", "User-Agent"],
+         "expose_headers": ["Content-Type", "Authorization"],
+         "supports_credentials": False,
+         "max_age": 3600
+     }})
 
 # Configure Swagger
 swagger_config = {
@@ -82,21 +63,25 @@ app.register_blueprint(schema_bp, url_prefix="/api/schema")
 
 # Root health check
 @app.route("/", methods=["GET"])
+@cross_origin(origins=["http://localhost:3000", "http://15.207.114.204:3000"])
 def root_health_check():
     return jsonify({"status": "healthy", "message": "SQL Analytics API is running", "version": "1.0.0"}), 200
 
 # Main health check endpoint for Render
 @app.route('/health', methods=["GET"])
+@cross_origin(origins=["http://localhost:3000", "http://15.207.114.204:3000"])
 def health_check():
     return jsonify({"status": "healthy", "message": "API is running"}), 200
 
 # API health check endpoint  
 @app.route('/api/health', methods=["GET"])
+@cross_origin(origins=["http://localhost:3000", "http://15.207.114.204:3000"])
 def api_health_check():
     return jsonify({"status": "healthy", "message": "API is running", "endpoints": ["/api/auth", "/api/queries", "/api/schema"]}), 200
 
 # Debug endpoint to show all routes (useful for troubleshooting)
 @app.route('/api/routes', methods=["GET"])
+@cross_origin(origins=["http://localhost:3000", "http://15.207.114.204:3000"])
 def show_routes():
     routes = []
     for rule in app.url_map.iter_rules():
