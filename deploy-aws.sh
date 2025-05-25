@@ -110,6 +110,7 @@ generate_secrets() {
 }
 
 # Create production environment file
+#15.207.114.204
 create_env_file() {
     print_status "Creating production environment file..."
     
