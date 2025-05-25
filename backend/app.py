@@ -23,12 +23,11 @@ CORS(app,
                  "http://localhost:3000",
                  "http://localhost:5173",
                  "http://15.207.114.204:3000",
-                 "https://15.207.114.204:3000",
-                 "https://*.vercel.app"
+                 "http://15.207.114.204:5000"
              ],
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-             "allow_headers": "*",
-             "expose_headers": "*",
+             "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin", "Referer", "User-Agent"],
+             "expose_headers": ["Content-Type", "Authorization"],
              "supports_credentials": False,
              "max_age": 3600
          }
@@ -37,21 +36,30 @@ CORS(app,
 # Add CORS headers to all responses
 @app.after_request
 def after_request(response):
+    # Get the origin from the request
     origin = request.headers.get('Origin')
     allowed_origins = [
         'http://localhost:3000',
         'http://localhost:5173',
         'http://15.207.114.204:3000',
-        'https://15.207.114.204:3000'
+        'http://15.207.114.204:5000'
     ]
     
-    if origin and (origin.endswith('.vercel.app') or origin in allowed_origins):
-        response.headers.add('Access-Control-Allow-Origin', origin)
+    if origin and origin in allowed_origins:
+        response.headers['Access-Control-Allow-Origin'] = origin
     else:
-        response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', '*')
-    response.headers.add('Access-Control-Allow-Methods', '*')
-    response.headers.add('Referrer-Policy', 'no-referrer-when-downgrade')
+        response.headers['Access-Control-Allow-Origin'] = '*'
+    
+    # Set other CORS headers
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Referer, User-Agent'
+    response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Max-Age'] = '3600'
+    
+    # Handle preflight requests
+    if request.method == 'OPTIONS':
+        response.status_code = 200
+    
     return response
 
 # Configure Swagger
