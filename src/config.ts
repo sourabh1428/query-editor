@@ -1,11 +1,10 @@
 // Detect if we're in development mode more reliably
 const isDevelopment = import.meta.env.MODE === 'development' || 
-                     window.location.hostname === 'localhost' || 
+                     (window.location.hostname === 'localhost' && window.location.port === '3000') || 
                      window.location.hostname === '127.0.0.1' ||
                      window.location.port === '5173' ||
-                     window.location.port === '3000' ||
-                     window.location.port === '80' || // Docker frontend port
-                     window.location.protocol === 'http:';
+                     (window.location.hostname === 'localhost' && window.location.port === '80') || // Docker frontend port
+                     (window.location.hostname === 'localhost' && window.location.protocol === 'http:');
 
 // Set API URL based on environment
 const getApiUrl = () => {
@@ -27,9 +26,14 @@ const getApiUrl = () => {
     return 'http://localhost:5000';
   }
   
-  // THIRD: Production domain detection fallback
+  // THIRD: Production domain detection
   if (window.location.hostname.includes('sql-analytics-platform.onrender.com')) {
     return 'https://sql-analytics-platform-api.onrender.com';
+  }
+  
+  // FOURTH: Check for EC2 instance
+  if (window.location.hostname === '15.207.114.204') {
+    return 'http://15.207.114.204:5000';
   }
   
   // FALLBACK: Default production API
