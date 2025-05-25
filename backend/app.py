@@ -4,6 +4,11 @@ from dotenv import load_dotenv
 from flasgger import Swagger
 import os
 from datetime import timedelta
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Import routes
 from routes.auth import auth_bp
@@ -15,22 +20,42 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configure CORS to allow all origins
-CORS(app, resources={r"/api/*": {
-    "origins": "*",
-    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    "allow_headers": "*",
-    "expose_headers": "*",
-    "supports_credentials": False,
-    "max_age": 3600
-}})
+# Configure CORS with explicit origins for both development and production
+allowed_origins = [
+    "http://localhost:3000",  # Development
+    "http://127.0.0.1:3000",  # Development alternative
+    "http://15.207.114.204:3000"  # Production
+]
 
-# Add CORS headers to all responses
+logger.info(f"Configuring CORS with allowed origins: {allowed_origins}")
+
+# Configure CORS
+CORS(app, 
+     resources={r"/api/*": {
+         "origins": allowed_origins,
+         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+         "expose_headers": ["Content-Type", "Authorization"],
+         "supports_credentials": True,
+         "max_age": 3600
+     }})
+
+# Add request logging middleware
+@app.before_request
+def log_request_info():
+    logger.debug('Headers: %s', request.headers)
+    logger.debug('Body: %s', request.get_data())
+    logger.debug('Origin: %s', request.headers.get('Origin'))
+    logger.debug('Method: %s', request.method)
+
 @app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', '*')
-    response.headers.add('Access-Control-Allow-Methods', '*')
+def add_cors_headers(response):
+    origin = request.headers.get('Origin')
+    if origin in allowed_origins:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With'
     return response
 
 # Configure Swagger
@@ -96,4 +121,4 @@ if __name__ == "__main__":
     print(f"🚀 Starting SQL Analytics Platform Backend on port {port}")
     print(f"📚 API Documentation available at: http://localhost:{port}/api-docs/")
     print(f"💚 Health check available at: http://localhost:{port}/api/health")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=True)

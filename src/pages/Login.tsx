@@ -58,7 +58,7 @@ const Login: React.FC = () => {
             {/* Title */}
             <div className="space-y-2">
               <CardTitle className="text-3xl font-bold text-gradient">
-                Welcome Back
+                Welcome  
               </CardTitle>
               <CardDescription className="text-base">
                 Sign in to your SQL Analytics account

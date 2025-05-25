@@ -43,16 +43,18 @@ ENV VITE_API_URL=${VITE_API_URL}
 RUN npm run build
 
 # Production stage
-FROM nginx:alpine
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install serve to run the production build
+RUN npm install -g serve
 
 # Copy the built frontend files
-COPY --from=frontend-builder /app/dist /usr/share/nginx/html
+COPY --from=frontend-builder /app/dist ./dist
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Expose port 3000
+EXPOSE 3000
 
-# Expose port 80
-EXPOSE 80
-
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the production server
+CMD ["serve", "-s", "dist", "-l", "3000"]

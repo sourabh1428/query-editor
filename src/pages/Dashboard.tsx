@@ -306,7 +306,7 @@ const Dashboard: React.FC = () => {
                   )}
                 </div>
                 <p className="text-muted-foreground mt-1">
-                  Welcome back, <span className="font-medium">{user?.username}</span>
+                  Welcome , <span className="font-medium">{user?.username}</span>
                 </p>
               </div>
               <div className="flex items-center gap-4">

@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
-# Get database URL from environment variable
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Get database URL from environment variable or use default
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/sqlanalytics")
 
 MAX_RETRIES = 5
 RETRY_DELAY = 2  # seconds
@@ -43,13 +43,13 @@ def create_database_if_not_exists():
         cur = conn.cursor()
         
         # Check if our database exists
-        cur.execute("SELECT 1 FROM pg_database WHERE datname = 'project'")
+        cur.execute("SELECT 1 FROM pg_database WHERE datname = 'sqlanalytics'")
         exists = cur.fetchone()
         
         if not exists:
             # Create the database
-            cur.execute('CREATE DATABASE project')
-            logger.info("Created database 'project'")
+            cur.execute('CREATE DATABASE sqlanalytics')
+            logger.info("Created database 'sqlanalytics'")
     except Exception as e:
         logger.error(f"Error creating database: {e}")
         raise
@@ -64,6 +64,7 @@ def get_connection():
     for attempt in range(MAX_RETRIES):
         try:
             logger.info(f"Attempting to connect to database (attempt {attempt + 1}/{MAX_RETRIES})")
+            logger.info(f"Using DATABASE_URL: {DATABASE_URL}")
             
             # On first attempt, ensure database exists
             if attempt == 0:
