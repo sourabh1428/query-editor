@@ -18,11 +18,11 @@ app = Flask(__name__)
 CORS(app, 
      resources={
          r"/*": {
-             "origins": ["*"],
+             "origins": ["http://15.207.114.204:3000", "http://localhost:3000"],
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-             "allow_headers": ["*"],
-             "expose_headers": ["*"],
-             "supports_credentials": False,
+             "allow_headers": ["Content-Type", "Authorization", "Accept"],
+             "expose_headers": ["Content-Type", "Authorization"],
+             "supports_credentials": True,
              "max_age": 3600
          }
      })
@@ -30,9 +30,12 @@ CORS(app,
 # Add CORS headers to all responses
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', '*')
-    response.headers.add('Access-Control-Allow-Methods', '*')
+    origin = request.headers.get('Origin')
+    if origin in ["http://15.207.114.204:3000", "http://localhost:3000"]:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
     return response
 
 # Configure Swagger
