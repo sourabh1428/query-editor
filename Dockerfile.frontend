@@ -20,6 +20,10 @@ COPY index.html ./
 COPY scripts/ ./scripts/
 COPY src/ src/
 
+# Build the application
+RUN npm run build
+
 EXPOSE 3000
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"] 
+# Serve the built application
+CMD ["npm", "run", "start"] 

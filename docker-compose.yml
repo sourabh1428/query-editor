@@ -40,16 +40,17 @@ services:
     restart: unless-stopped
     environment:
       VITE_API_URL: http://15.207.114.204:5000
+      NODE_ENV: production
     volumes:
-      - ./src:/app/src
-      - ./public:/app/public
-      - ./package.json:/app/package.json
-      - ./package-lock.json:/app/package-lock.json
-      - ./tsconfig.json:/app/tsconfig.json
-      - ./vite.config.ts:/app/vite.config.ts
-      - ./postcss.config.js:/app/postcss.config.js
-      - ./tailwind.config.js:/app/tailwind.config.js
-      - ./index.html:/app/index.html
+      - ./src:/app/src:delegated
+      - ./public:/app/public:delegated
+      - ./package.json:/app/package.json:delegated
+      - ./package-lock.json:/app/package-lock.json:delegated
+      - ./tsconfig.json:/app/tsconfig.json:delegated
+      - ./vite.config.ts:/app/vite.config.ts:delegated
+      - ./postcss.config.js:/app/postcss.config.js:delegated
+      - ./tailwind.config.js:/app/tailwind.config.js:delegated
+      - ./index.html:/app/index.html:delegated
     ports:
       - "3000:3000"
     depends_on:

@@ -4,15 +4,9 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Force development mode
-  mode = 'development';
-  
   // Load env file based on `mode` in the current directory.
   // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
   const env = loadEnv(mode, process.cwd(), '');
-  
-  // Force API URL to localhost
-  env.VITE_API_URL = 'http://15.207.114.204:5000';
   
   return {
     plugins: [react()],
@@ -29,11 +23,20 @@ export default defineConfig(({ mode }) => {
       commonjsOptions: {
         include: [/node_modules/],
       },
+      outDir: 'dist',
     },
     server: {
       port: 3000,
       strictPort: true,
-      host: true
+      host: true,
+      watch: {
+        usePolling: true,
+      },
+    },
+    preview: {
+      port: 3000,
+      strictPort: true,
+      host: true,
     },
     define: {
       'process.env': env
