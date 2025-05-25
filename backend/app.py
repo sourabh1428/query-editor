@@ -19,7 +19,13 @@ app = Flask(__name__)
 CORS(app, 
      resources={
          r"/*": {
-             "origins": ["http://localhost:3000", "http://localhost:5173", "http://15.207.114.204:3000", "https://*.vercel.app"],
+             "origins": [
+                 "http://localhost:3000",
+                 "http://localhost:5173",
+                 "http://15.207.114.204:3000",
+                 "https://15.207.114.204:3000",
+                 "https://*.vercel.app"
+             ],
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
              "allow_headers": "*",
              "expose_headers": "*",
@@ -32,8 +38,14 @@ CORS(app,
 @app.after_request
 def after_request(response):
     origin = request.headers.get('Origin')
-    if origin and (origin.endswith('.vercel.app') or 
-                  origin in ['http://localhost:3000', 'http://localhost:5173', 'http://15.207.114.204:3000']):
+    allowed_origins = [
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://15.207.114.204:3000',
+        'https://15.207.114.204:3000'
+    ]
+    
+    if origin and (origin.endswith('.vercel.app') or origin in allowed_origins):
         response.headers.add('Access-Control-Allow-Origin', origin)
     else:
         response.headers.add('Access-Control-Allow-Origin', '*')

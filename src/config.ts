@@ -19,17 +19,17 @@ const getApiUrl = () => {
   
   // THIRD: Production domain detection
   if (window.location.hostname.includes('vercel.app')) {
-    return 'http://15.207.114.204:5000';
+    return 'https://15.207.114.204:5000';
   }
   
   // FOURTH: Check for EC2 instance or localhost:3000
   if (window.location.hostname === '15.207.114.204' || 
       (window.location.hostname === 'localhost' && window.location.port === '3000')) {
-    return 'http://15.207.114.204:5000';
+    return 'https://15.207.114.204:5000';
   }
   
   // FALLBACK: Default to production API
-  return 'http://15.207.114.204:5000';
+  return 'https://15.207.114.204:5000';
 };
 
 export const API_URL = getApiUrl();
