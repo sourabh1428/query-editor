@@ -39,7 +39,9 @@ class ApiService {
       method,
       headers: {
         ...this.getAuthHeaders(),
-        ...headers
+        ...headers,
+        'Origin': window.location.origin,
+        'X-Requested-With': 'XMLHttpRequest'
       },
       mode: 'cors',
       credentials: 'include'

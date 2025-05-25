@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useToast } from '../components/ui/use-toast';
-import { apiService } from '../services/api';
+import { apiClient } from '../services/apiClient';
 
 interface User {
   id: number;
@@ -19,6 +19,10 @@ interface AuthContextType {
   logout: () => void;
 }
 
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
@@ -29,11 +33,6 @@ export const useAuth = () => {
   return context;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-//http://15.207.114.204
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
@@ -44,7 +43,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      // Note: We'll need to add a /users/me endpoint or handle auth validation differentlysssss
       setLoading(false);
     } else {
       setLoading(false);
@@ -59,7 +57,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     setAuthLoading(true);
     try {
-      const data = await apiService.login(email, password);
+      const response = await apiClient.login(email, password);
+      const data = response.data;
       
       localStorage.setItem("token", data.token);
       setToken(data.token);
@@ -70,11 +69,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         description: "You have successfully logged in.",
         variant: "default",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
       toast({
         title: "Login Failed",
-        description: error instanceof Error ? error.message : "An error occurred during login",
+        description: error.response?.data?.message || error.message || "An error occurred during login",
         variant: "destructive",
       });
       throw error;
@@ -91,7 +90,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     setAuthLoading(true);
     try {
-      const data = await apiService.register(username, email, password);
+      const response = await apiClient.register(username, email, password);
+      const data = response.data;
       
       localStorage.setItem("token", data.token);
       setToken(data.token);
@@ -102,11 +102,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         description: "Your account has been created.",
         variant: "default",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
       toast({
         title: "Registration Failed",
-        description: error instanceof Error ? error.message : "An error occurred during registration",
+        description: error.response?.data?.message || error.message || "An error occurred during registration",
         variant: "destructive",
       });
       throw error;

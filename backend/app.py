@@ -3,6 +3,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from flasgger import Swagger
 import os
+from datetime import timedelta
 
 # Import routes
 from routes.auth import auth_bp
@@ -14,15 +15,15 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Simple and effective CORS configuration
+# Configure CORS to allow all origins
 CORS(app, 
      resources={
          r"/*": {
-             "origins": ["http://15.207.114.204:3000", "http://localhost:3000"],
+             "origins": ["http://localhost:3000", "http://localhost:5173", "http://15.207.114.204:3000", "https://*.vercel.app"],
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-             "allow_headers": ["Content-Type", "Authorization", "Accept"],
-             "expose_headers": ["Content-Type", "Authorization"],
-             "supports_credentials": True,
+             "allow_headers": "*",
+             "expose_headers": "*",
+             "supports_credentials": False,
              "max_age": 3600
          }
      })
@@ -31,11 +32,14 @@ CORS(app,
 @app.after_request
 def after_request(response):
     origin = request.headers.get('Origin')
-    if origin in ["http://15.207.114.204:3000", "http://localhost:3000"]:
+    if origin and (origin.endswith('.vercel.app') or 
+                  origin in ['http://localhost:3000', 'http://localhost:5173', 'http://15.207.114.204:3000']):
         response.headers.add('Access-Control-Allow-Origin', origin)
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+    else:
+        response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', '*')
+    response.headers.add('Access-Control-Allow-Methods', '*')
+    response.headers.add('Referrer-Policy', 'no-referrer-when-downgrade')
     return response
 
 # Configure Swagger
