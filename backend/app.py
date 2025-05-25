@@ -19,15 +19,10 @@ app = Flask(__name__)
 CORS(app, 
      resources={
          r"/*": {
-             "origins": [
-                 "http://localhost:3000",
-                 "http://localhost:5173",
-                 "http://15.207.114.204:3000",
-                 "http://15.207.114.204:5000"
-             ],
+             "origins": "*",
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-             "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin", "Referer", "User-Agent"],
-             "expose_headers": ["Content-Type", "Authorization"],
+             "allow_headers": "*",
+             "expose_headers": "*",
              "supports_credentials": False,
              "max_age": 3600
          }
@@ -38,14 +33,9 @@ CORS(app,
 def after_request(response):
     # Get the origin from the request
     origin = request.headers.get('Origin')
-    allowed_origins = [
-        'http://localhost:3000',
-        'http://localhost:5173',
-        'http://15.207.114.204:3000',
-        'http://15.207.114.204:5000'
-    ]
     
-    if origin and origin in allowed_origins:
+    # Always set the Access-Control-Allow-Origin header to match the request origin
+    if origin:
         response.headers['Access-Control-Allow-Origin'] = origin
     else:
         response.headers['Access-Control-Allow-Origin'] = '*'
@@ -55,10 +45,7 @@ def after_request(response):
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Referer, User-Agent'
     response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization'
     response.headers['Access-Control-Max-Age'] = '3600'
-    
-    # Handle preflight requests
-    if request.method == 'OPTIONS':
-        response.status_code = 200
+    response.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
     
     return response
 

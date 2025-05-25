@@ -11,9 +11,7 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Referer, User-Agent'
+        'Referrer-Policy': 'no-referrer-when-downgrade'
       }
     });
 
@@ -24,10 +22,8 @@ class ApiClient {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
-        // Add CORS headers to each request
-        config.headers['Access-Control-Allow-Origin'] = '*';
-        config.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
-        config.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Referer, User-Agent';
+        // Ensure referrer policy is set for each request
+        config.headers['Referrer-Policy'] = 'no-referrer-when-downgrade';
         return config;
       },
       (error) => {
@@ -65,9 +61,7 @@ class ApiClient {
     try {
       const response = await this.client.post('/api/auth/login', { email, password }, {
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Referer, User-Agent'
+          'Referrer-Policy': 'no-referrer-when-downgrade'
         }
       });
       return response;
