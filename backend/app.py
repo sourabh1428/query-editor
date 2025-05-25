@@ -15,20 +15,23 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configure CORS with specific settings
-CORS(app, 
-     resources={r"/api/*": {
-         "origins": [
-             "http://localhost:3000",
-             "http://localhost:5173",
-             "http://15.207.114.204:3000"
-         ],
-         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-         "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin", "Referer", "User-Agent"],
-         "expose_headers": ["Content-Type", "Authorization"],
-         "supports_credentials": False,
-         "max_age": 3600
-     }})
+# Configure CORS to allow all origins
+CORS(app, resources={r"/api/*": {
+    "origins": "*",
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "allow_headers": "*",
+    "expose_headers": "*",
+    "supports_credentials": False,
+    "max_age": 3600
+}})
+
+# Add CORS headers to all responses
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', '*')
+    response.headers.add('Access-Control-Allow-Methods', '*')
+    return response
 
 # Configure Swagger
 swagger_config = {
@@ -63,25 +66,21 @@ app.register_blueprint(schema_bp, url_prefix="/api/schema")
 
 # Root health check
 @app.route("/", methods=["GET"])
-@cross_origin(origins=["http://localhost:3000", "http://15.207.114.204:3000"])
 def root_health_check():
     return jsonify({"status": "healthy", "message": "SQL Analytics API is running", "version": "1.0.0"}), 200
 
 # Main health check endpoint for Render
 @app.route('/health', methods=["GET"])
-@cross_origin(origins=["http://localhost:3000", "http://15.207.114.204:3000"])
 def health_check():
     return jsonify({"status": "healthy", "message": "API is running"}), 200
 
 # API health check endpoint  
 @app.route('/api/health', methods=["GET"])
-@cross_origin(origins=["http://localhost:3000", "http://15.207.114.204:3000"])
 def api_health_check():
     return jsonify({"status": "healthy", "message": "API is running", "endpoints": ["/api/auth", "/api/queries", "/api/schema"]}), 200
 
 # Debug endpoint to show all routes (useful for troubleshooting)
 @app.route('/api/routes', methods=["GET"])
-@cross_origin(origins=["http://localhost:3000", "http://15.207.114.204:3000"])
 def show_routes():
     routes = []
     for rule in app.url_map.iter_rules():
