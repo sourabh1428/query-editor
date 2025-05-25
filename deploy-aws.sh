@@ -55,7 +55,7 @@ install_docker() {
         sudo yum install -y docker
         sudo systemctl start docker
         sudo systemctl enable docker
-        sudo usermod -a -G docker ec2-user
+        sudo usermod -a -G docker ubuntu
         print_status "Docker installed successfully"
     else
         print_status "Docker already installed"
@@ -268,11 +268,11 @@ After=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-WorkingDirectory=/home/ec2-user/query-editor
+WorkingDirectory=/home/ubuntu/query-editor
 ExecStart=/usr/local/bin/docker-compose -f docker-compose.yml -f docker-compose.production.yml up -d
 ExecStop=/usr/local/bin/docker-compose down
 TimeoutStartSec=0
-User=ec2-user
+User=ubuntu
 
 [Install]
 WantedBy=multi-user.target
@@ -333,7 +333,7 @@ main() {
 
 # Check if script is run with sudo (it shouldn't be)
 if [ "$EUID" -eq 0 ]; then 
-    print_error "Please run this script as regular user (ec2-user), not as root"
+    print_error "Please run this script as regular user (ubuntu), not as root"
     exit 1
 fi
 

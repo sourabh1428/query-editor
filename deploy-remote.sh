@@ -15,43 +15,72 @@ print_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
 print_error() { echo -e "${RED}❌ $1${NC}"; }
 
 # Navigate to application directory
-cd /home/ubuntu/query-editor || {
+APP_DIR="/home/ubuntu/query-editor"
+cd "$APP_DIR" || {
     print_error "Application directory not found. Running initial setup..."
-    cd /home/ubuntu
+    cd /home/ubuntu || {
+        print_error "Failed to access /home/ubuntu directory"
+        exit 1
+    }
     git clone https://github.com/sourabh1428/query-editor.git
-    cd query-editor
+    cd query-editor || {
+        print_error "Failed to access cloned repository"
+        exit 1
+    }
 }
 
-# Install Docker if not installed
-if ! command -v docker &> /dev/null; then
-    print_status "Installing Docker..."
-    sudo apt-get update
-    sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo apt-get update
-    sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-    sudo usermod -aG docker ubuntu
-fi
+# Install Docker
+print_status "Setting up Docker..."
 
-# Install Docker Compose if not installed
-if ! command -v docker-compose &> /dev/null; then
-    print_status "Installing Docker Compose..."
-    sudo curl -L "https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose
-fi
+# Remove old versions if they exist
+for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do
+    sudo apt-get remove -y $pkg || true
+done
+
+# Add Docker's official GPG key
+print_status "Adding Docker's GPG key..."
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Add the repository to Apt sources
+print_status "Setting up Docker repository..."
+echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install Docker packages
+print_status "Installing Docker..."
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Start Docker service
+print_status "Starting Docker service..."
+sudo systemctl enable docker
+sudo systemctl start docker
+
+# Add user to docker group
+print_status "Adding user to docker group..."
+sudo usermod -aG docker ubuntu
+newgrp docker
+
+# Install Docker Compose
+print_status "Installing Docker Compose..."
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Verify installations
+print_status "Verifying installations..."
+docker --version || print_error "Docker installation failed"
+docker-compose --version || print_error "Docker Compose installation failed"
 
 # Pull latest changes
 print_status "Pulling latest changes from GitHub..."
 git fetch origin
 git reset --hard origin/main
-
-# Check if Docker is running
-if ! docker info >/dev/null 2>&1; then
-    print_error "Docker is not running. Starting Docker..."
-    sudo systemctl start docker
-    sleep 5
-fi
 
 # Generate production environment if it doesn't exist
 if [ ! -f .env.production ]; then
