@@ -164,9 +164,7 @@ const Login: React.FC = () => {
         </Card>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-xs text-muted-foreground">
-          <p>© 2024 SQL Analytics. All rights reserved.</p>
-        </div>
+   
       </div>
     </div>
   );

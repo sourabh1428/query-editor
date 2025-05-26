@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Moon, Sun, LayoutDashboard, History, Database, Settings, LogOut, Download, Trash2, Clock, Play, Copy, Loader2, ChevronRight, Zap, Activity } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, History, Database, LogOut, Download, Trash2, Clock, Play, Copy, Loader2, ChevronRight, Zap, Activity } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -11,7 +11,6 @@ import { useTheme } from '../components/theme-provider';
 import { useToast } from '../components/ui/use-toast';
 import QueryResults from '../components/QueryResults';
 import SchemaExplorer from '../components/SchemaExplorer';
-import SettingsPage from './Settings';
 import { apiService } from '../services/api';
 
 interface QueryResult {
@@ -179,7 +178,6 @@ const Dashboard: React.FC = () => {
     { label: 'Query Editor', tab: 'editor', icon: LayoutDashboard },
     { label: 'History', tab: 'history', icon: History },
     { label: 'Schema', tab: 'schema', icon: Database },
-    { label: 'Settings', tab: 'settings', icon: Settings },
   ];
 
   const handleTabClick = (tab: string | undefined) => {
@@ -553,12 +551,6 @@ const Dashboard: React.FC = () => {
                   />
                 </CardContent>
               </Card>
-            )}
-
-            {activeTab === 'settings' && (
-              <div className="-m-8">
-                <SettingsPage />
-              </div>
             )}
           </div>
         </div>

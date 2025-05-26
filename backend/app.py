@@ -22,8 +22,10 @@ app = Flask(__name__)
 
 # Configure CORS with explicit origins for both development and production
 allowed_origins = [
-    "http://localhost:3000",  # Development
-    "http://127.0.0.1:3000",  # Development alternative
+    "http://localhost:3000",  # Development frontend
+    "http://127.0.0.1:3000",  # Development frontend alternative
+    "http://localhost:5000",  # Development backend
+    "http://127.0.0.1:5000",  # Development backend alternative
     "http://15.207.114.204:3000"  # Production
 ]
 

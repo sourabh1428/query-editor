@@ -246,46 +246,10 @@ const Register: React.FC = () => {
               </Button>
             </form>
 
-            {/* Terms and Privacy */}
-            <div className="text-center pt-4 border-t border-border/50">
-              <p className="text-xs text-muted-foreground mb-4">
-                By creating an account, you agree to our{' '}
-                <Link 
-                  to="/terms" 
-                  className="text-primary hover:text-primary/80 transition-colors"
-                  tabIndex={isLoading ? -1 : 0}
-                >
-                  Terms of Service
-                </Link>{' '}
-                and{' '}
-                <Link 
-                  to="/privacy" 
-                  className="text-primary hover:text-primary/80 transition-colors"
-                  tabIndex={isLoading ? -1 : 0}
-                >
-                  Privacy Policy
-                </Link>
-              </p>
-              
-              {/* Sign In Link */}
-              <p className="text-sm text-muted-foreground">
-                Already have an account?{' '}
-                <Link
-                  to="/login"
-                  className="text-primary hover:text-primary/80 font-medium transition-colors"
-                  tabIndex={isLoading ? -1 : 0}
-                >
-                  Sign in
-                </Link>
-              </p>
-            </div>
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <div className="text-center mt-8 text-xs text-muted-foreground">
-          <p>© 2024 SQL Analytics. All rights reserved.</p>
-        </div>
+
       </div>
     </div>
   );
