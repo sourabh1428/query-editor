@@ -171,7 +171,7 @@ def create_sample_data():
             VALUES 
                 ('admin', 'admin@example.com', 'admin123', 'admin_user'),
                 ('user1', 'user1@example.com', 'user123', 'regular_user')
-            ON CONFLICT (email) DO NOTHING
+            ON CONFLICT (username) DO NOTHING
             RETURNING id;
         """)
         
