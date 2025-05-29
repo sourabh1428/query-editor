@@ -3,7 +3,6 @@ import jwt
 from functools import wraps
 from flask import request, jsonify, make_response
 from dotenv import load_dotenv
-from db.db import query
 
 load_dotenv()
 
@@ -29,20 +28,13 @@ def token_required(f):
         try:
             # Decode token
             payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-            
-            # Get user from database
-            user = query('SELECT * FROM users WHERE id = %s', (payload['id'],))[0]
-            
             # Add user info to request
-            request.user = user
-            
-            return f(*args, current_user=user, **kwargs)
-            
+            request.user = payload
         except jwt.ExpiredSignatureError:
             return jsonify({'message': 'Token expired.'}), 401
         except jwt.InvalidTokenError:
             return jsonify({'message': 'Invalid token.'}), 401
-        except Exception as e:
-            return jsonify({'message': f'Error validating token: {str(e)}'}), 401
+        
+        return f(*args, **kwargs)
     
     return decorated

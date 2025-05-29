@@ -5,7 +5,7 @@ import os
 import datetime
 from db.db import query
 import logging
-from middleware.auth_middleware import token_required
+from functools import wraps
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -14,6 +14,34 @@ logger = logging.getLogger(__name__)
 auth_bp = Blueprint('auth', __name__)
 
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key")
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            try:
+                token = auth_header.split(" ")[1]
+            except IndexError:
+                return jsonify({'message': 'Invalid token format'}), 401
+
+        if not token:
+            return jsonify({'message': 'Token is missing'}), 401
+
+        try:
+            data = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+            current_user = query('SELECT * FROM users WHERE id = %s', (data['id'],))[0]
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Invalid token'}), 401
+        except Exception as e:
+            logger.error(f"Token validation error: {str(e)}")
+            return jsonify({'message': 'Invalid token'}), 401
+
+        return f(current_user, *args, **kwargs)
+    return decorated
 
 def add_cors_headers(response):
     if isinstance(response, tuple):
@@ -39,8 +67,7 @@ def get_current_user(current_user):
                 'id': current_user['id'],
                 'username': current_user['username'],
                 'email': current_user['email'],
-                'userType': current_user['user_type'],
-                'lastLogin': current_user['last_login']
+                'userType': current_user['user_type']
             }
         })
         return add_cors_headers(response), 200
@@ -152,9 +179,6 @@ def login():
             response = jsonify({'message': 'Invalid email or password'}), 400
             return add_cors_headers(response)
         
-        # Update last login timestamp
-        query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = %s', (user['id'],))
-        
         # Generate token
         token = jwt.encode({
             'id': user['id'],
@@ -171,8 +195,7 @@ def login():
                 'id': user['id'],
                 'username': user['username'],
                 'email': user['email'],
-                'userType': user['user_type'],
-                'lastLogin': user['last_login']
+                'userType': user['user_type']
             }
         })
         return add_cors_headers(response), 200

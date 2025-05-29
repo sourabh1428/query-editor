@@ -3,16 +3,13 @@ version: '3.8'
 services:
   db:
     image: postgres:14-alpine
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: sqlanalytics
-      POSTGRES_INITDB_ARGS: "--data-checksums"
-      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backup:/backup
     ports:
       - "5432:5432"
     networks:
@@ -22,49 +19,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-        reservations:
-          memory: 1G
-    command: >
-      postgres
-      -c shared_buffers=256MB
-      -c max_connections=100
-      -c max_wal_size=1GB
-      -c checkpoint_timeout=15min
-      -c wal_level=replica
-      -c synchronous_commit=off
-      -c fsync=off
-      -c full_page_writes=off
-      -c random_page_cost=1.1
-      -c effective_cache_size=1GB
-      -c maintenance_work_mem=256MB
-      -c work_mem=16MB
-      -c temp_buffers=8MB
-      -c log_min_duration_statement=1000
-      -c log_checkpoints=on
-      -c log_connections=on
-      -c log_disconnections=on
-      -c log_lock_waits=on
-      -c log_temp_files=0
-      -c log_autovacuum_min_duration=0
-      -c autovacuum_max_workers=3
-      -c autovacuum_naptime=1min
-      -c autovacuum_vacuum_scale_factor=0.1
-      -c autovacuum_analyze_scale_factor=0.05
-      -c autovacuum_vacuum_threshold=50
-      -c autovacuum_analyze_threshold=50
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "100m"
-        max-file: "3"
 
   backend:
     build:

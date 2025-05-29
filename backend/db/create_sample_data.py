@@ -14,15 +14,9 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 def get_db_connection():
-    """Get a database connection using environment variables"""
+    """Create a database connection."""
     try:
-        conn = psycopg2.connect(
-            host=os.getenv('DB_HOST', 'db'),  # Use 'db' as default for Docker
-            database=os.getenv('DB_NAME', 'sqlanalytics'),
-            user=os.getenv('DB_USER', 'postgres'),
-            password=os.getenv('DB_PASSWORD', '2WJw0nmi97ZDdKRxCE8xuXITA'),
-            port=os.getenv('DB_PORT', '5432')
-        )
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
         return conn
     except Exception as e:
         logger.error(f"Error connecting to database: {str(e)}")
@@ -159,54 +153,6 @@ def insert_sample_data(conn):
         logger.error(f"Error inserting sample data: {str(e)}")
         raise
 
-def create_sample_data():
-    """Create sample data in the database"""
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        
-        # Create sample users
-        cur.execute("""
-            INSERT INTO users (username, email, password_hash, user_type)
-            VALUES 
-                ('admin', 'admin@example.com', 'admin123', 'admin_user'),
-                ('user1', 'user1@example.com', 'user123', 'regular_user')
-            ON CONFLICT (username) DO NOTHING
-            RETURNING id;
-        """)
-        
-        # Get user IDs
-        user_ids = cur.fetchall()
-        if not user_ids:
-            cur.execute("SELECT id FROM users WHERE email = 'admin@example.com'")
-            user_ids = cur.fetchall()
-        
-        admin_id = user_ids[0]['id']
-        
-        # Create sample queries
-        cur.execute("""
-            INSERT INTO queries (user_id, query_text, is_favorite, favorite_name)
-            VALUES 
-                (%s, 'SELECT * FROM customers LIMIT 10;', true, 'Customer Overview'),
-                (%s, 'SELECT COUNT(*) FROM orders;', true, 'Order Count'),
-                (%s, 'SELECT * FROM products WHERE price > 100;', false, NULL)
-            ON CONFLICT DO NOTHING;
-        """, (admin_id, admin_id, admin_id))
-        
-        conn.commit()
-        logger.info("Sample data created successfully")
-        
-    except Exception as e:
-        logger.error(f"Error creating sample data: {str(e)}")
-        if 'conn' in locals():
-            conn.rollback()
-        raise
-    finally:
-        if 'cur' in locals():
-            cur.close()
-        if 'conn' in locals():
-            conn.close()
-
 def main():
     """Main function to create tables and insert sample data."""
     try:
@@ -229,4 +175,4 @@ def main():
         raise
 
 if __name__ == "__main__":
-    create_sample_data() 
+    main() 
