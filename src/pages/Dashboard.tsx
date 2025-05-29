@@ -181,10 +181,33 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleFavoriteClick = (queryId: number) => {
-    setSelectedQueryId(queryId);
-    setFavoriteName('');
-    setFavoriteDialogOpen(true);
+  const handleFavoriteClick = async (queryId: number) => {
+    const query = history.find(q => q.id === queryId);
+    if (!query) return;
+
+    try {
+      if (query.is_favorite) {
+        // If already a favorite, just remove it
+        await apiService.toggleFavorite(queryId);
+        fetchHistory();
+        toast({
+          title: "Success",
+          description: "Query removed from favorites",
+        });
+      } else {
+        // If not a favorite, show dialog to add name
+        setSelectedQueryId(queryId);
+        setFavoriteName('');
+        setFavoriteDialogOpen(true);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update favorite status",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFavoriteSubmit = async () => {
