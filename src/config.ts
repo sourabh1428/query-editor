@@ -1,7 +1,7 @@
 // Force development mode in local environment
 const isDevelopment = true; // Force development mode
 
-// Set API URL based on environment
+// Set API URL based on environmentsssssssssssssssssssssss
 const getApiUrl = () => {
   // Force localhost in development
   console.log('Development mode detected, forcing localhost:5000');
