@@ -13,51 +13,11 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
-# Get database URL from environment variable or use default
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/sqlanalytics")
+# Get database URL from environment variable
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 MAX_RETRIES = 5
 RETRY_DELAY = 2  # seconds
-
-def get_default_db_url():
-    """Get the default database URL for initial connection"""
-    # Parse the DATABASE_URL to get connection parameters
-    db_url = DATABASE_URL
-    if db_url.startswith('postgres://'):
-        db_url = db_url.replace('postgres://', 'postgresql://', 1)
-    
-    # Replace the database name with 'postgres' for initial connection
-    db_url = re.sub(r'/([^/]+)$', '/postgres', db_url)
-    return db_url
-
-def create_database_if_not_exists():
-    """Create the database if it doesn't exist"""
-    # Get the default database URL
-    default_db_url = get_default_db_url()
-    
-    # Connect to the default 'postgres' database
-    conn = None
-    try:
-        conn = psycopg2.connect(default_db_url)
-        conn.autocommit = True
-        cur = conn.cursor()
-        
-        # Check if our database exists
-        cur.execute("SELECT 1 FROM pg_database WHERE datname = 'sqlanalytics'")
-        exists = cur.fetchone()
-        
-        if not exists:
-            # Create the database
-            cur.execute('CREATE DATABASE sqlanalytics')
-            logger.info("Created database 'sqlanalytics'")
-    except Exception as e:
-        logger.error(f"Error creating database: {e}")
-        raise
-    finally:
-        if cur:
-            cur.close()
-        if conn:
-            conn.close()
 
 def get_connection():
     """Create a database connection with retry logic"""
@@ -66,11 +26,7 @@ def get_connection():
             logger.info(f"Attempting to connect to database (attempt {attempt + 1}/{MAX_RETRIES})")
             logger.info(f"Using DATABASE_URL: {DATABASE_URL}")
             
-            # On first attempt, ensure database exists
-            if attempt == 0:
-                create_database_if_not_exists()
-            
-            # Connect to our database
+            # Connect to the database
             conn = psycopg2.connect(DATABASE_URL)
             logger.info("Database connection successful")
             return conn
