@@ -33,7 +33,8 @@ def create_tables(cur):
             email VARCHAR(100) UNIQUE NOT NULL,
             password_hash VARCHAR(255) NOT NULL,
             user_type VARCHAR(20) NOT NULL,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS categories (
@@ -50,7 +51,8 @@ def create_tables(cur):
             price DECIMAL(10,2) NOT NULL,
             category_id INTEGER REFERENCES categories(id),
             stock_quantity INTEGER NOT NULL DEFAULT 0,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS orders (
@@ -58,7 +60,8 @@ def create_tables(cur):
             user_id INTEGER REFERENCES users(id),
             total_amount DECIMAL(10,2) NOT NULL,
             status VARCHAR(20) NOT NULL,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS order_items (
@@ -142,18 +145,20 @@ def seed_users(cur):
         hashed_password = bcrypt.hashpw(user['password'].encode('utf-8'), bcrypt.gensalt())
         try:
             cur.execute("""
-                INSERT INTO users (username, email, password_hash, user_type, created_at)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO users (username, email, password_hash, user_type, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 ON CONFLICT (email) DO UPDATE 
                 SET username = EXCLUDED.username,
                     password_hash = EXCLUDED.password_hash,
-                    user_type = EXCLUDED.user_type
+                    user_type = EXCLUDED.user_type,
+                    updated_at = EXCLUDED.updated_at
                 RETURNING id
             """, (
                 user['username'],
                 user['email'],
                 hashed_password.decode('utf-8'),
                 user['user_type'],
+                datetime.now(timezone.utc),
                 datetime.now(timezone.utc)
             ))
             user_id = cur.fetchone()[0]
@@ -231,8 +236,8 @@ def seed_products(cur):
 
     for product in products:
         cur.execute("""
-            INSERT INTO products (name, description, price, category_id, stock_quantity, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO products (name, description, price, category_id, stock_quantity, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (name) DO NOTHING
         """, (
             product['name'],
@@ -240,6 +245,7 @@ def seed_products(cur):
             product['price'],
             product['category_id'],
             product['stock_quantity'],
+            datetime.now(timezone.utc),
             datetime.now(timezone.utc)
         ))
 
@@ -248,14 +254,15 @@ def seed_orders(cur):
     for user_id in range(1, 6):  # Assuming we have 5 users
         for _ in range(2):  # 2 orders per user
             cur.execute("""
-                INSERT INTO orders (user_id, total_amount, status, created_at)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO orders (user_id, total_amount, status, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s)
                 RETURNING id
             """, (
                 user_id,
                 random.uniform(50.0, 500.0),
                 random.choice(['pending', 'completed', 'shipped']),
-                datetime.now(timezone.utc) - timedelta(days=random.randint(1, 30))
+                datetime.now(timezone.utc) - timedelta(days=random.randint(1, 30)),
+                datetime.now(timezone.utc)
             ))
             order_id = cur.fetchone()[0]
 

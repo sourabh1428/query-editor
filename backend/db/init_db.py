@@ -19,6 +19,32 @@ def init_db():
     finally:
         conn.close()
     
+    # Check if trigger exists before creating it
+    check_trigger = """
+    SELECT EXISTS (
+        SELECT 1 FROM pg_trigger 
+        WHERE tgname = 'update_users_updated_at'
+    );
+    """
+    result = query(check_trigger)
+    trigger_exists = False
+    if result:
+        # If result is a list of tuples/lists
+        if isinstance(result[0], (list, tuple)) and len(result[0]) > 0:
+            trigger_exists = result[0][0]
+        # If result is a list of dicts (e.g., from DictCursor)
+        elif isinstance(result[0], dict) and 'exists' in result[0]:
+            trigger_exists = result[0]['exists']
+    
+    if not trigger_exists:
+        create_trigger = """
+        CREATE TRIGGER update_users_updated_at
+        BEFORE UPDATE ON users
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+        """
+        execute_transaction([(create_trigger, None)])
+    
     # Generate password hash for the admin user
     password = "123123"
     salt = bcrypt.gensalt()
