@@ -26,6 +26,33 @@ def add_cors_headers(response):
             response.headers.add('Access-Control-Allow-Credentials', 'true')
         return response
 
+def validate_query(sql_query, user_type):
+    """Validate SQL query for security and allowed operations"""
+    # Remove comments and normalize whitespace
+    sql_lower = ' '.join(sql_query.lower().split())
+    
+    # Extract the first word of the query (the command)
+    first_word = sql_lower.split()[0] if sql_lower else ''
+    
+    # Check for INSERT specifically
+    if first_word == 'insert':
+        if user_type != 'admin_user':
+            return False, "Only SELECT queries are allowed"
+        return True, None
+    
+    # Check for other write operations
+    if first_word in ['update', 'delete', 'drop', 'alter', 'create', 'truncate']:
+        if user_type != 'admin_user':
+            return False, "Only SELECT queries are allowed"
+        return True, None
+    
+    # Check if query starts with SELECT
+    if first_word != 'select':
+        if user_type != 'admin_user':
+            return False, "Query must start with SELECT"
+    
+    return True, None
+
 @queries_bp.route('/execute', methods=['POST', 'OPTIONS'])
 def execute_query():
     """
@@ -65,18 +92,29 @@ def execute_query():
             data = request.get_json()
             sql_query = data.get('query')
             user_id = request.user['id']
+            user_type = request.user['userType']
             
             if not sql_query:
                 response = jsonify({'message': 'Query is required'}), 400
                 return add_cors_headers(response)
             
-            # Check if query is read-only (for security)
-            sql_lower = sql_query.lower().strip()
-            if any(keyword in sql_lower for keyword in ['insert', 'update', 'delete', 'drop', 'alter', 'create']):
-                response = jsonify({'message': 'Only SELECT queries are allowed'}), 400
+            # Log the query and user type for debugging
+            logger.debug(f"Validating query for user type {user_type}: {sql_query}")
+            
+            # Validate query with user type
+            is_valid, error_message = validate_query(sql_query, user_type)
+            if not is_valid:
+                logger.debug(f"Query validation failed: {error_message}")
+                response = jsonify({'message': error_message}), 400
                 return add_cors_headers(response)
             
-            # Execute query directly (Redis caching removed for production stability)
+            # For INSERT queries, add RETURNING clause if not present
+            if sql_query.lower().strip().startswith('insert'):
+                if 'returning' not in sql_query.lower():
+                    # Add RETURNING * at the end of the query
+                    sql_query = sql_query.rstrip(';') + ' RETURNING *;'
+            
+            # Execute query
             result = query(sql_query)
             
             # Save to history
