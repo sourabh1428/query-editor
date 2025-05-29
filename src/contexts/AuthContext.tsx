@@ -40,13 +40,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      setLoading(false);
-    } else {
-      setLoading(false);
+  const fetchUserData = async () => {
+    try {
+      const response = await apiClient.getCurrentUser();
+      setUser(response.data.user);
+    } catch (error: any) {
+      console.error('Error fetching user data:', error);
+      // Only remove token if we get a 401 Unauthorized response
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        setToken(null);
+        setUser(null);
+        toast({
+          title: "Session Expired",
+          description: "Please log in again to continue.",
+          variant: "destructive",
+        });
+      }
     }
+  };
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        setToken(storedToken);
+        await fetchUserData();
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string) => {

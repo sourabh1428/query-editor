@@ -36,8 +36,25 @@ CORS(app,
      resources={r"/api/*": {
          "origins": allowed_origins,
          "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-         "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
-         "expose_headers": ["Content-Type", "Authorization"],
+         "allow_headers": [
+             "Content-Type", 
+             "Authorization", 
+             "Accept", 
+             "Origin", 
+             "X-Requested-With",
+             "Access-Control-Allow-Origin",
+             "Access-Control-Allow-Headers",
+             "Access-Control-Allow-Methods",
+             "Access-Control-Allow-Credentials"
+         ],
+         "expose_headers": [
+             "Content-Type", 
+             "Authorization",
+             "Access-Control-Allow-Origin",
+             "Access-Control-Allow-Headers",
+             "Access-Control-Allow-Methods",
+             "Access-Control-Allow-Credentials"
+         ],
          "supports_credentials": True,
          "max_age": 3600
      }})
@@ -57,7 +74,7 @@ def add_cors_headers(response):
         response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Access-Control-Allow-Credentials'] = 'true'
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods, Access-Control-Allow-Credentials'
     return response
 
 # Configure Swagger

@@ -5,7 +5,7 @@ const isDevelopment = true; // Force development mode
 const getApiUrl = () => {
   // Force localhost in development
   console.log('Development mode detected, forcing localhost:5000');
-  return 'http://15.207.114.204:5000';
+  return 'http://localhost:5000/';
 };
 
 export const API_URL = getApiUrl();

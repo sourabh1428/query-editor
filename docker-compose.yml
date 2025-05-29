@@ -3,23 +3,74 @@ version: '3.8'
 services:
   db:
     image: postgres:14-alpine
-    restart: unless-stopped
+    restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: sqlanalytics
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backup:/backup
     ports:
       - "5432:5432"
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c max_connections=100
+      -c max_wal_size=1GB
+      -c checkpoint_timeout=15min
+      -c wal_level=replica
+      -c synchronous_commit=off
+      -c fsync=off
+      -c full_page_writes=off
+      -c random_page_cost=1.1
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=256MB
+      -c work_mem=16MB
+      -c temp_buffers=8MB
+      -c log_min_duration_statement=1000
+      -c log_checkpoints=on
+      -c log_connections=on
+      -c log_disconnections=on
+      -c log_lock_waits=on
+      -c log_temp_files=0
+      -c log_autovacuum_min_duration=0
+      -c autovacuum_max_workers=3
+      -c autovacuum_naptime=1min
+      -c autovacuum_vacuum_scale_factor=0.1
+      -c autovacuum_analyze_scale_factor=0.05
+      -c autovacuum_vacuum_threshold=50
+      -c autovacuum_analyze_threshold=50
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
 
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
-    restart: unless-stopped
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
     environment:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/sqlanalytics
       JWT_SECRET: ${JWT_SECRET:-your-secret-key}
@@ -27,11 +78,18 @@ services:
       PORT: 5000
       FRONTEND_URL: ${FRONTEND_URL:-http://15.207.114.204:3000}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "5000:5000"
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build:
@@ -54,7 +112,8 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - app-network
 

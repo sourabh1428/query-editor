@@ -61,7 +61,11 @@ class ApiClient {
             data: error.response.data
           });
           
-          if (error.response.status === 401) {
+          // Only handle 401 for non-auth endpoints and non-me endpoint
+          if (error.response.status === 401 && 
+              error.config?.url && 
+              !error.config.url.includes('/api/auth/') &&
+              !error.config.url.includes('/api/auth/me')) {
             localStorage.removeItem('token');
             window.location.href = '/login';
           }
@@ -105,6 +109,16 @@ class ApiClient {
 
   async register(username: string, email: string, password: string) {
     return this.client.post('/api/auth/register', { username, email, password });
+  }
+
+  async getCurrentUser() {
+    try {
+      const response = await this.client.get('/api/auth/me');
+      return response;
+    } catch (error) {
+      // Let the AuthContext handle token removal
+      throw error;
+    }
   }
 
   // Query endpoints
