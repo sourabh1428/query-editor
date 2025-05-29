@@ -181,24 +181,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const toggleFavorite = async (queryId: number) => {
-    try {
-      await apiService.toggleFavorite(queryId);
-      fetchHistory();
-      toast({
-        title: "Success",
-        description: "Favorite status updated",
-      });
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update favorite status",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleFavoriteClick = (queryId: number) => {
     setSelectedQueryId(queryId);
     setFavoriteName('');
