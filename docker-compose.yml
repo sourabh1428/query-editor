@@ -6,8 +6,10 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 2WJw0nmi97ZDdKRxCE8xuXITA
+      POSTGRES_PASSWORD: postgres123
       POSTGRES_DB: sqlanalytics
+      POSTGRES_HOST_AUTH_METHOD: trust
+    command: postgres -c 'password_encryption=scram-sha-256'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -26,7 +28,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     environment:
-      DATABASE_URL: postgresql://postgres:2WJw0nmi97ZDdKRxCE8xuXITA@db:5432/sqlanalytics
+      DATABASE_URL: postgresql://postgres:postgres123@db:5432/sqlanalytics
       JWT_SECRET: your-secret-key
       FLASK_ENV: production
       PORT: 5000
