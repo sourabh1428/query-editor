@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Moon, Sun, LayoutDashboard, History, Database, LogOut, Download, Trash2, Clock, Play, Copy, Loader2, ChevronRight, Zap, Activity } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, History, Database, LogOut, Download, Trash2, Clock, Play, Copy, Loader2, ChevronRight, Zap, Activity, Star, ChevronDown, Folder, FolderOpen } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -12,6 +12,9 @@ import { useToast } from '../components/ui/use-toast';
 import QueryResults from '../components/QueryResults';
 import SchemaExplorer from '../components/SchemaExplorer';
 import { apiService } from '../services/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 
 interface QueryResult {
   [key: string]: any;
@@ -30,7 +33,8 @@ interface QueryHistoryItem {
   created_at: string;
   user_id: number;
   status?: string;
-  favorite?: boolean;
+  is_favorite: boolean;
+  favorite_name?: string;
 }
 
 const Dashboard: React.FC = () => {
@@ -45,6 +49,10 @@ const Dashboard: React.FC = () => {
   const [tableSchema, setTableSchema] = useState<any | null>(null);
   const [schemaLoading, setSchemaLoading] = useState(false);
   const [activeEditorTab, setActiveEditorTab] = useState('editor');
+  const [favoriteDialogOpen, setFavoriteDialogOpen] = useState(false);
+  const [selectedQueryId, setSelectedQueryId] = useState<number | null>(null);
+  const [favoriteName, setFavoriteName] = useState('');
+  const [expandedFolders, setExpandedFolders] = useState<{ [key: string]: boolean }>({});
 
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -173,10 +181,83 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const toggleFavorite = async (queryId: number) => {
+    try {
+      await apiService.toggleFavorite(queryId);
+      fetchHistory();
+      toast({
+        title: "Success",
+        description: "Favorite status updated",
+      });
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update favorite status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFavoriteClick = (queryId: number) => {
+    setSelectedQueryId(queryId);
+    setFavoriteName('');
+    setFavoriteDialogOpen(true);
+  };
+
+  const handleFavoriteSubmit = async () => {
+    if (!selectedQueryId) return;
+    
+    try {
+      // First toggle the favorite status
+      const toggleResponse = await apiService.toggleFavorite(selectedQueryId);
+      
+      // Only update the name if the toggle was successful
+      if (toggleResponse) {
+        await apiService.updateFavoriteName(selectedQueryId, favoriteName);
+        fetchHistory();
+        setFavoriteDialogOpen(false);
+        toast({
+          title: "Success",
+          description: "Query marked as favorite",
+        });
+      }
+    } catch (error) {
+      console.error('Error updating favorite:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update favorite status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleFolder = (folderName: string) => {
+    setExpandedFolders(prev => ({
+      ...prev,
+      [folderName]: !prev[folderName]
+    }));
+  };
+
+  const getFavoriteFolders = () => {
+    const folders: { [key: string]: QueryHistoryItem[] } = {};
+    history
+      .filter(item => item.is_favorite)
+      .forEach(item => {
+        const folderName = item.favorite_name || 'Unnamed';
+        if (!folders[folderName]) {
+          folders[folderName] = [];
+        }
+        folders[folderName].push(item);
+      });
+    return folders;
+  };
+
   // Sidebar navigation links with icons
   const navLinks: NavLink[] = [
     { label: 'Query Editor', tab: 'editor', icon: LayoutDashboard },
     { label: 'History', tab: 'history', icon: History },
+    { label: 'Favorites', tab: 'favorites', icon: Star },
     { label: 'Schema', tab: 'schema', icon: Database },
   ];
 
@@ -236,8 +317,12 @@ const Dashboard: React.FC = () => {
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{user?.username}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              {user?.lastLogin && (
+                <p className="text-xs text-muted-foreground truncate">
+                  Last login: {new Date(user.lastLogin).toLocaleString()}
+                </p>
+              )}
             </div>
-          
           </div>
         </div>
 
@@ -489,8 +574,14 @@ const Dashboard: React.FC = () => {
                                   <Badge variant="outline" className="text-xs">
                                     Query #{item.id}
                                   </Badge>
+                                  {item.is_favorite && (
+                                    <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                                      <Star className="w-3 h-3" />
+                                      {item.favorite_name || 'Favorite'}
+                                    </Badge>
+                                  )}
                                 </div>
-                                <pre className="text-sm bg-background/50 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-words border border-border/30">
+                                <pre className="text-sm text-gray-700 whitespace-pre-wrap break-words bg-gray-50 p-2 rounded border border-gray-200 mt-1">
                                   {item.query_text}
                                 </pre>
                               </div>
@@ -505,6 +596,14 @@ const Dashboard: React.FC = () => {
                                   className="text-muted-foreground hover:text-primary"
                                 >
                                   <Play className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleFavoriteClick(item.id)}
+                                  className={`${item.is_favorite ? 'text-yellow-500' : 'text-muted-foreground'} hover:text-yellow-500`}
+                                >
+                                  <Star className="w-4 h-4" fill={item.is_favorite ? 'currentColor' : 'none'} />
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -526,6 +625,121 @@ const Dashboard: React.FC = () => {
                             </div>
                           </CardContent>
                         </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'favorites' && (
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-card to-card/50">
+                <CardHeader className="border-b border-border/50">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Star className="w-5 h-5" />
+                    Favorite Queries
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {historyLoading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : history.filter(item => item.is_favorite).length === 0 ? (
+                    <div className="text-center py-12">
+                      <Star className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">No favorite queries yet</p>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Mark queries as favorites from the history tab to see them here
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {Object.entries(getFavoriteFolders()).map(([folderName, queries]) => (
+                        <div key={folderName} className="border rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleFolder(folderName)}
+                            className="w-full flex items-center gap-2 p-4 bg-muted/30 hover:bg-muted/50 transition-colors"
+                          >
+                            {expandedFolders[folderName] ? (
+                              <FolderOpen className="w-5 h-5 text-primary" />
+                            ) : (
+                              <Folder className="w-5 h-5 text-primary" />
+                            )}
+                            <span className="font-medium">{folderName}</span>
+                            <Badge variant="secondary" className="ml-2">
+                              {queries.length} {queries.length === 1 ? 'query' : 'queries'}
+                            </Badge>
+                            {expandedFolders[folderName] ? (
+                              <ChevronDown className="w-4 h-4 ml-auto" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 ml-auto" />
+                            )}
+                          </button>
+                          {expandedFolders[folderName] && (
+                            <div className="p-4 space-y-4 bg-card">
+                              {queries.map((item: QueryHistoryItem) => (
+                                <Card key={item.id} className="bg-muted/30 border-border/50 hover:bg-muted/50 transition-colors">
+                                  <CardContent className="p-4">
+                                    <div className="flex flex-wrap items-start justify-between gap-4">
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                            <Clock className="w-4 h-4 flex-shrink-0" />
+                                            {formatDate(item.created_at)}
+                                          </div>
+                                          <Badge variant="outline" className="text-xs">
+                                            Query #{item.id}
+                                          </Badge>
+                                        </div>
+                                        <pre className="text-sm text-gray-700 whitespace-pre-wrap break-words bg-gray-50 p-2 rounded border border-gray-200 mt-1">
+                                          {item.query_text}
+                                        </pre>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => {
+                                            setQuery(item.query_text);
+                                            setActiveTab('editor');
+                                          }}
+                                          className="text-muted-foreground hover:text-primary"
+                                        >
+                                          <Play className="w-4 h-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleFavoriteClick(item.id)}
+                                          className="text-yellow-500 hover:text-yellow-600"
+                                        >
+                                          <Star className="w-4 h-4" fill="currentColor" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => downloadResults(item.id)}
+                                          className="text-muted-foreground hover:text-primary"
+                                        >
+                                          <Download className="w-4 h-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => deleteQuery(item.id)}
+                                          className="text-destructive hover:text-destructive/90"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   )}
@@ -568,6 +782,32 @@ const Dashboard: React.FC = () => {
           </div>
         )}
       </main>
+
+      <Dialog open={favoriteDialogOpen} onOpenChange={setFavoriteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Name Your Favorite Query</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="favoriteName">Favorite Name</Label>
+            <Input
+              id="favoriteName"
+              value={favoriteName}
+              onChange={(e) => setFavoriteName(e.target.value)}
+              placeholder="Enter a name for this favorite query"
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFavoriteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleFavoriteSubmit}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

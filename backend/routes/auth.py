@@ -67,7 +67,8 @@ def get_current_user(current_user):
                 'id': current_user['id'],
                 'username': current_user['username'],
                 'email': current_user['email'],
-                'userType': current_user['user_type']
+                'userType': current_user['user_type'],
+                'lastLogin': current_user['last_login']
             }
         })
         return add_cors_headers(response), 200
@@ -179,6 +180,9 @@ def login():
             response = jsonify({'message': 'Invalid email or password'}), 400
             return add_cors_headers(response)
         
+        # Update last login timestamp
+        query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = %s', (user['id'],))
+        
         # Generate token
         token = jwt.encode({
             'id': user['id'],
@@ -195,7 +199,8 @@ def login():
                 'id': user['id'],
                 'username': user['username'],
                 'email': user['email'],
-                'userType': user['user_type']
+                'userType': user['user_type'],
+                'lastLogin': user['last_login']
             }
         })
         return add_cors_headers(response), 200

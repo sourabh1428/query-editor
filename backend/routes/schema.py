@@ -1,8 +1,10 @@
 from flask import Blueprint, request, jsonify, make_response
 from middleware.auth_middleware import token_required
-from db.db import query
+from db.db import query, get_connection
+import logging
 
 schema_bp = Blueprint('schema', __name__)
+logger = logging.getLogger(__name__)
 
 def add_cors_headers(response):
     """Add CORS headers to response"""
@@ -22,57 +24,40 @@ def add_cors_headers(response):
             response.headers.add('Access-Control-Allow-Credentials', 'true')
         return response
 
-@schema_bp.route('/tables', methods=['GET', 'OPTIONS'])
-def get_tables():
-    """
-    Get all tables in the database
-    ---
-    tags:
-      - Schema
-    security:
-      - Bearer: []
-    responses:
-      200:
-        description: Tables retrieved successfully
-      401:
-        description: Unauthorized
-    """
-    if request.method == 'OPTIONS':
-        response = make_response()
-        return add_cors_headers(response)
-    
-    # Apply token validation only for non-OPTIONS requests
-    @token_required
-    def get_tables_with_auth():
-        try:
-            sql = """
-                SELECT 
-                    table_name 
-                FROM 
-                    information_schema.tables 
-                WHERE 
-                    table_schema = 'public' 
-                    AND table_type = 'BASE TABLE'
-                ORDER BY 
-                    table_name
-            """
-            
-            result = query(sql)
-            
-            response = jsonify({
-                'message': 'Tables retrieved successfully',
-                'tables': [row['table_name'] for row in result]
-            }), 200
-            return add_cors_headers(response)
+@schema_bp.route('/tables', methods=['GET'])
+@token_required
+def get_tables(current_user):
+    """Get list of all tables in the database"""
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
         
-        except Exception as e:
-            response = jsonify({'message': str(e)}), 500
-            return add_cors_headers(response)
-    
-    return get_tables_with_auth()
+        # Query to get all table names
+        cur.execute("""
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+            ORDER BY table_name;
+        """)
+        
+        tables = [row[0] for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        
+        return jsonify({
+            'status': 'success',
+            'tables': tables
+        })
+    except Exception as e:
+        logger.error(f"Error getting tables: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to get tables'
+        }), 500
 
 @schema_bp.route('/tables/<table_name>', methods=['GET', 'OPTIONS'])
-def get_table_schema(table_name):
+@token_required
+def get_table_schema(table_name, current_user):
     """
     Get columns for a specific table
     ---
@@ -97,96 +82,91 @@ def get_table_schema(table_name):
         response = make_response()
         return add_cors_headers(response)
     
-    # Apply token validation only for non-OPTIONS requests
-    @token_required
-    def get_table_schema_with_auth():
-        try:
-            # Check if table exists
-            table_check_sql = """
-                SELECT 
-                    table_name 
-                FROM 
-                    information_schema.tables 
-                WHERE 
-                    table_schema = 'public' 
-                    AND table_name = %s
-            """
-            
-            table_check = query(table_check_sql, (table_name,))
-            
-            if not table_check:
-                response = jsonify({'message': 'Table not found'}), 404
-                return add_cors_headers(response)
-            
-            # Get columns
-            columns_sql = """
-                SELECT 
-                    column_name, 
-                    data_type, 
-                    is_nullable, 
-                    column_default
-                FROM 
-                    information_schema.columns 
-                WHERE 
-                    table_schema = 'public' 
-                    AND table_name = %s
-                ORDER BY 
-                    ordinal_position
-            """
-            
-            columns = query(columns_sql, (table_name,))
-            
-            # Get primary keys
-            pk_sql = """
-                SELECT 
-                    kcu.column_name
-                FROM 
-                    information_schema.table_constraints tc
-                    JOIN information_schema.key_column_usage kcu
-                    ON tc.constraint_name = kcu.constraint_name
-                WHERE 
-                    tc.constraint_type = 'PRIMARY KEY'
-                    AND tc.table_name = %s
-            """
-            
-            pk_result = query(pk_sql, (table_name,))
-            primary_keys = [row['column_name'] for row in pk_result]
-            
-            # Get foreign keys
-            fk_sql = """
-                SELECT 
-                    kcu.column_name,
-                    ccu.table_name AS foreign_table_name,
-                    ccu.column_name AS foreign_column_name
-                FROM 
-                    information_schema.table_constraints tc
-                    JOIN information_schema.key_column_usage kcu
-                    ON tc.constraint_name = kcu.constraint_name
-                    JOIN information_schema.constraint_column_usage ccu
-                    ON ccu.constraint_name = tc.constraint_name
-                WHERE 
-                    tc.constraint_type = 'FOREIGN KEY'
-                    AND tc.table_name = %s
-            """
-            
-            foreign_keys = query(fk_sql, (table_name,))
-            
-            # Get sample data
-            sample_sql = f"SELECT * FROM {table_name} LIMIT 5"
-            sample_data = query(sample_sql)
-            
-            response = jsonify({
-                'message': 'Table schema retrieved successfully',
-                'table': table_name,
-                'columns': columns,
-                'primaryKeys': primary_keys,
-                'foreignKeys': foreign_keys,
-                'sampleData': sample_data
-            }), 200
+    try:
+        # Check if table exists
+        table_check_sql = """
+            SELECT 
+                table_name 
+            FROM 
+                information_schema.tables 
+            WHERE 
+                table_schema = 'public' 
+                AND table_name = %s
+        """
+        
+        table_check = query(table_check_sql, (table_name,))
+        
+        if not table_check:
+            response = jsonify({'message': 'Table not found'}), 404
             return add_cors_headers(response)
         
-        except Exception as e:
-            response = jsonify({'message': str(e)}), 500
-            return add_cors_headers(response)
+        # Get columns
+        columns_sql = """
+            SELECT 
+                column_name, 
+                data_type, 
+                is_nullable, 
+                column_default
+            FROM 
+                information_schema.columns 
+            WHERE 
+                table_schema = 'public' 
+                AND table_name = %s
+            ORDER BY 
+                ordinal_position
+        """
+        
+        columns = query(columns_sql, (table_name,))
+        
+        # Get primary keys
+        pk_sql = """
+            SELECT 
+                kcu.column_name
+            FROM 
+                information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu
+                ON tc.constraint_name = kcu.constraint_name
+            WHERE 
+                tc.constraint_type = 'PRIMARY KEY'
+                AND tc.table_name = %s
+        """
+        
+        pk_result = query(pk_sql, (table_name,))
+        primary_keys = [row['column_name'] for row in pk_result]
+        
+        # Get foreign keys
+        fk_sql = """
+            SELECT 
+                kcu.column_name,
+                ccu.table_name AS foreign_table_name,
+                ccu.column_name AS foreign_column_name
+            FROM 
+                information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu
+                ON tc.constraint_name = kcu.constraint_name
+                JOIN information_schema.constraint_column_usage ccu
+                ON ccu.constraint_name = tc.constraint_name
+            WHERE 
+                tc.constraint_type = 'FOREIGN KEY'
+                AND tc.table_name = %s
+        """
+        
+        foreign_keys = query(fk_sql, (table_name,))
+        
+        # Get sample data
+        sample_sql = f"SELECT * FROM {table_name} LIMIT 5"
+        sample_data = query(sample_sql)
+        
+        response = jsonify({
+            'message': 'Table schema retrieved successfully',
+            'table': table_name,
+            'columns': columns,
+            'primaryKeys': primary_keys,
+            'foreignKeys': foreign_keys,
+            'sampleData': sample_data
+        }), 200
+        return add_cors_headers(response)
     
-    return get_table_schema_with_auth()
+    except Exception as e:
+        response = jsonify({'message': str(e)}), 500
+        return add_cors_headers(response)

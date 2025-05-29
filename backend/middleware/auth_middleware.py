@@ -35,6 +35,6 @@ def token_required(f):
         except jwt.InvalidTokenError:
             return jsonify({'message': 'Invalid token.'}), 401
         
-        return f(*args, **kwargs)
+        return f(*args, current_user=payload, **kwargs)
     
     return decorated

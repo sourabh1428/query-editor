@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     user_type VARCHAR(20) NOT NULL DEFAULT 'regular_user',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP WITH TIME ZONE
 );
 
 -- Create queries table
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS queries (
     result_count INTEGER,
     execution_time FLOAT,
     is_favorite BOOLEAN DEFAULT FALSE,
+    favorite_name VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

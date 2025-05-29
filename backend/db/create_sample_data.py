@@ -16,7 +16,13 @@ load_dotenv()
 def get_db_connection():
     """Create a database connection."""
     try:
-        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        conn = psycopg2.connect(
+            dbname='sqlanalytics',
+            user='postgres',
+            password='postgres',
+            host='localhost',
+            port='5432'
+        )
         return conn
     except Exception as e:
         logger.error(f"Error connecting to database: {str(e)}")

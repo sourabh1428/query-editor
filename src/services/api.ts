@@ -170,6 +170,19 @@ class ApiService {
     });
   }
 
+  async toggleFavorite(queryId: number) {
+    return this.makeRequest(`/api/queries/${queryId}/favorite`, {
+      method: 'POST'
+    });
+  }
+
+  async updateFavoriteName(queryId: number, name: string) {
+    return this.makeRequest(`/api/queries/${queryId}/favorite/name`, {
+      method: 'PUT',
+      body: { name }
+    });
+  }
+
   // Schema endpoints
   async getTables() {
     return this.makeRequest('/api/schema/tables');
